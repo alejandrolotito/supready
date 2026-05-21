@@ -27,23 +27,23 @@ jobs:
       - name: Generate Android project scaffold
         run: flutter create --project-name supready --org com.supready --platforms android .
 
-      - name: Override Android build files
+      - name: Override Android files
         run: |
-          # Apply our custom build.gradle with proper compileSdkVersion
+          # Only override app/build.gradle and manifest - keep flutter-generated root files
           cp android_custom/app_build.gradle android/app/build.gradle
-          cp android_custom/root_build.gradle android/build.gradle
-          cp android_custom/gradle_wrapper.properties android/gradle/wrapper/gradle-wrapper.properties
           cp android_custom/AndroidManifest_custom.xml android/app/src/main/AndroidManifest.xml
 
-          # Fix MainActivity to use v2 embedding
-          MAIN_KT=$(find android -name "MainActivity.kt" | head -1)
-          cat > $MAIN_KT << 'KOTLIN'
+          # Fix MainActivity to v2 embedding
+          MAIN_KT=$(find android/app/src/main/kotlin -name "MainActivity.kt" | head -1)
+          cat > "$MAIN_KT" << 'KOTLIN'
 package com.supready.supready
 import io.flutter.embedding.android.FlutterActivity
 class MainActivity : FlutterActivity()
 KOTLIN
-          echo "All android files patched ✅"
+          echo "=== app/build.gradle ==="
           cat android/app/build.gradle
+          echo "=== MainActivity.kt ==="
+          cat "$MAIN_KT"
 
       - name: Install dependencies
         run: flutter pub get
@@ -58,7 +58,7 @@ KOTLIN
         if: failure()
         run: |
           echo "--- BUILD ERRORS $(date) ---" > BUILD_ERRORS.txt
-          tail -100 /tmp/build_output.txt >> BUILD_ERRORS.txt
+          tail -120 /tmp/build_output.txt >> BUILD_ERRORS.txt
           git config user.email "ci@supready.app"
           git config user.name "SUPReady CI"
           git add BUILD_ERRORS.txt
