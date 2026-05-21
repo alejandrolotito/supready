@@ -1,1 +1,40 @@
-Build failed due to use of deleted Android v1 embedding.
+--- ERRORS ---
+
+Running Gradle task 'assembleDebug'...                          
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/runner/.pub-cache/hosted/pub.dev/geolocator_android-4.6.2/android/build.gradle' line: 29
+
+* What went wrong:
+A problem occurred evaluating project ':geolocator_android'.
+> Could not get unknown property 'flutter' for extension 'android' of type com.android.build.gradle.LibraryExtension.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+A problem occurred configuring project ':geolocator_android'.
+> Failed to notify project evaluation listener.
+   > Cannot invoke method substring() on null object
+   > compileSdkVersion is not specified. Please add it to build.gradle
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+==============================================================================
+
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 1m 22s
+Running Gradle task 'assembleDebug'...                             82.7s
+Gradle task assembleDebug failed with exit code 1
