@@ -10,25 +10,17 @@ import 'presentation/screens/profile/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Orientación bloqueada para sesiones de agua
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
-
-  // Status bar transparente sobre fondo oscuro
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarBrightness: Brightness.dark,
     statusBarIconBrightness: Brightness.light,
   ));
-
   runApp(const SupReadyApp());
 }
 
 class SupReadyApp extends StatelessWidget {
   const SupReadyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
@@ -40,9 +32,6 @@ class SupReadyApp extends StatelessWidget {
   }
 }
 
-// ============================================================
-// Router (go_router)
-// ============================================================
 final _router = GoRouter(
   initialLocation: '/home',
   routes: [
@@ -59,25 +48,21 @@ final _router = GoRouter(
   ],
 );
 
-// ============================================================
-// Shell con Bottom Navigation Bar
-// ============================================================
 class _MainShell extends StatelessWidget {
   final Widget child;
   const _MainShell({required this.child});
 
-  static const _tabs = [
-    ('/home',    Icons.home_outlined,       Icons.home,           'Inicio'),
-    ('/spots',   Icons.location_on_outlined, Icons.location_on,   'Spots'),
-    ('/track',   Icons.surfing,             Icons.surfing,         'Remada'),
-    ('/academy', Icons.school_outlined,     Icons.school,         'Academia'),
-    ('/profile', Icons.person_outline,      Icons.person,         'Perfil'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    final currentIndex = _tabs.indexWhere((t) => t.$1 == location);
+    final tabs = [
+      (path: '/home',    icon: Icons.home_outlined,        selIcon: Icons.home,         label: 'Inicio'),
+      (path: '/spots',   icon: Icons.location_on_outlined,  selIcon: Icons.location_on,  label: 'Spots'),
+      (path: '/track',   icon: Icons.surfing,               selIcon: Icons.surfing,       label: 'Remada'),
+      (path: '/academy', icon: Icons.school_outlined,       selIcon: Icons.school,        label: 'Academia'),
+      (path: '/profile', icon: Icons.person_outline,        selIcon: Icons.person,        label: 'Perfil'),
+    ];
+    final currentIndex = tabs.indexWhere((t) => t.path == location);
 
     return Scaffold(
       body: child,
@@ -85,12 +70,12 @@ class _MainShell extends StatelessWidget {
         backgroundColor: SupColors.surface,
         indicatorColor: SupColors.cyanNeonDim,
         selectedIndex: currentIndex < 0 ? 0 : currentIndex,
-        onDestinationSelected: (i) => context.go(_tabs[i].$1),
+        onDestinationSelected: (i) => context.go(tabs[i].path),
         labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-        destinations: _tabs.map((t) => NavigationDestination(
-          icon: Icon(t.$2, color: SupColors.textSecondary),
-          selectedIcon: Icon(t.$3, color: SupColors.cyanNeon),
-          label: t.$4,
+        destinations: tabs.map((t) => NavigationDestination(
+          icon: Icon(t.icon, color: SupColors.textSecondary),
+          selectedIcon: Icon(t.selIcon, color: SupColors.cyanNeon),
+          label: t.label,
         )).toList(),
       ),
     );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 
-// Academia SUP (ERS Módulo 5 - RF5.1, RF5.2)
 class AcademyScreen extends StatelessWidget {
   const AcademyScreen({super.key});
 
@@ -38,7 +37,6 @@ class _LeccionCard extends StatelessWidget {
   final String titulo;
   final String subtitulo;
   final IconData icon;
-
   const _LeccionCard({required this.titulo, required this.subtitulo, required this.icon});
 
   @override
@@ -55,57 +53,19 @@ class _LeccionCard extends StatelessWidget {
         children: [
           Container(
             width: 48, height: 48,
-            decoration: BoxDecoration(
-              color: SupColors.cyanNeonDim,
-              borderRadius: BorderRadius.circular(12),
-            ),
+            decoration: BoxDecoration(color: SupColors.cyanNeonDim, borderRadius: BorderRadius.circular(12)),
             child: Icon(icon, color: SupColors.cyanNeon),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(titulo, style: SupTextStyles.heading2.copyWith(fontSize: 16)),
-                const SizedBox(height: 2),
-                Text(subtitulo, style: SupTextStyles.body.copyWith(fontSize: 13)),
-              ],
-            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(titulo, style: SupTextStyles.heading2.copyWith(fontSize: 16)),
+              const SizedBox(height: 2),
+              Text(subtitulo, style: SupTextStyles.body.copyWith(fontSize: 13)),
+            ]),
           ),
           const Icon(Icons.play_circle_outline, color: SupColors.cyanNeon, size: 28),
         ],
-      ),
-    );
-  }
-}
-
-// Perfil
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Mi Perfil')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircleAvatar(radius: 48, backgroundColor: SupColors.surface,
-              child: Icon(Icons.person, size: 48, color: SupColors.cyanNeon)),
-            const SizedBox(height: 16),
-            const Text('Iniciar sesión con Google', style: SupTextStyles.heading2),
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.login),
-                label: const Text('CONTINUAR CON GOOGLE'),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
