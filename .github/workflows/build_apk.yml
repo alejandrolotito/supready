@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   build:
@@ -31,6 +30,31 @@ jobs:
       - name: Apply custom AndroidManifest
         run: cp android_custom/AndroidManifest_custom.xml android/app/src/main/AndroidManifest.xml
 
+      - name: Fix Android v2 embedding in AndroidManifest
+        run: |
+          # Ensure FlutterActivity is used (v2 embedding)
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          # Replace any old FlutterActivity reference with v2
+          sed -i 's|io.flutter.app.FlutterActivity|io.flutter.embedding.android.FlutterActivity|g' $MANIFEST
+          # Add flutter_embedding metadata if not present
+          if ! grep -q "flutterEmbedding" $MANIFEST; then
+            sed -i 's|</application>|    <meta-data android:name="flutterEmbedding" android:value="2" />\n    </application>|' $MANIFEST
+          fi
+          echo "Manifest patched:"
+          cat $MANIFEST
+
+      - name: Fix MainActivity to use v2 embedding
+        run: |
+          MAIN_KT=$(find android -name "MainActivity.kt" | head -1)
+          echo "Found: $MAIN_KT"
+          cat > $MAIN_KT << 'KOTLIN'
+          package com.supready.supready
+          import io.flutter.embedding.android.FlutterActivity
+          class MainActivity : FlutterActivity()
+          KOTLIN
+          echo "MainActivity.kt updated"
+          cat $MAIN_KT
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -40,24 +64,18 @@ jobs:
       - name: Build APK debug
         run: flutter build apk --debug 2>&1 | tee /tmp/build_output.txt; exit ${PIPESTATUS[0]}
 
-      - name: Show errors (on failure)
+      - name: Write errors to repo on failure
         if: failure()
         run: |
-          echo "============ BUILD ERRORS ============"
-          grep -E "error:|Error |Exception|\.dart:" /tmp/build_output.txt || tail -100 /tmp/build_output.txt
-          echo "======================================"
-
-      - name: Write errors to repo file (on failure)
-        if: failure()
-        run: |
-          grep -E "error:|Error |Exception|\.dart:" /tmp/build_output.txt > BUILD_ERRORS.txt || tail -100 /tmp/build_output.txt > BUILD_ERRORS.txt
+          echo "--- ERRORS ---" > BUILD_ERRORS.txt
+          tail -80 /tmp/build_output.txt >> BUILD_ERRORS.txt
           git config user.email "ci@supready.app"
           git config user.name "SUPReady CI"
           git add BUILD_ERRORS.txt
           git commit -m "ci: build errors [skip ci]" || true
           git push || true
 
-      - name: Upload APK on success
+      - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
