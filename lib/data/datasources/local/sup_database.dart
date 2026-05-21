@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../models/models.dart';
+import 'package:supready/data/models/models.dart';
 
 // ============================================================
 // SUPReady - Base de Datos Local SQLite

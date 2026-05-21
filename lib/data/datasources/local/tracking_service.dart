@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:geolocator/geolocator.dart';
-import '../../data/models/models.dart';
-import '../../data/datasources/local/sup_database.dart';
+import 'package:supready/data/models/models.dart';
+import 'package:supready/data/datasources/local/sup_database.dart';
 
 // ============================================================
 // SUPReady - Servicio de Trackeo GPS

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../data/datasources/remote/auth_service.dart';
+import 'package:supready/core/theme/app_theme.dart';
+import 'package:supready/data/datasources/remote/auth_service.dart';
+import 'package:supready/data/models/models.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

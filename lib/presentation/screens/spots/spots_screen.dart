@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../data/models/models.dart';
-import '../../widgets/spot_card/spot_card.dart';
+import 'package:supready/core/theme/app_theme.dart';
+import 'package:supready/data/models/models.dart';
+import 'package:supready/presentation/widgets/spot_card/spot_card.dart';
 
 class SpotsScreen extends StatelessWidget {
   const SpotsScreen({super.key});

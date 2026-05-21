@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import '../datasources/local/sup_database.dart';
+import 'package:supready/data/datasources/local/sup_database.dart';
 
 // ============================================================
 // SUPReady - Servicio de Sincronización

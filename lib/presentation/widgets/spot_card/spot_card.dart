@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../data/models/models.dart';
+import 'package:supready/core/theme/app_theme.dart';
+import 'package:supready/data/models/models.dart';
 
 // ============================================================
 // SUPReady - Widget: SpotCard con Semáforo

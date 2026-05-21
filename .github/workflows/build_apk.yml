@@ -3,8 +3,6 @@ name: Build APK
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build:
@@ -23,10 +21,19 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Generate Android project scaffold
+        run: flutter create --project-name supready --org com.supready --platforms android .
+
+      - name: Apply custom AndroidManifest
+        run: cp android_custom/AndroidManifest_custom.xml android/app/src/main/AndroidManifest.xml
+
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build APK (debug)
+      - name: Analyze (non-blocking)
+        run: flutter analyze --no-fatal-infos 2>&1 || true
+
+      - name: Build APK debug
         run: flutter build apk --debug
 
       - name: Upload APK

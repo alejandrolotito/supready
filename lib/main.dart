@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'core/theme/app_theme.dart';
-import 'presentation/screens/tracking/tracking_screen.dart';
-import 'presentation/screens/home/home_screen.dart';
-import 'presentation/screens/spots/spots_screen.dart';
-import 'presentation/screens/academy/academy_screen.dart';
-import 'presentation/screens/profile/profile_screen.dart';
+import 'package:supready/core/theme/app_theme.dart';
+import 'package:supready/presentation/screens/tracking/tracking_screen.dart';
+import 'package:supready/presentation/screens/home/home_screen.dart';
+import 'package:supready/presentation/screens/spots/spots_screen.dart';
+import 'package:supready/presentation/screens/academy/academy_screen.dart';
+import 'package:supready/presentation/screens/profile/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,6 +1,6 @@
 import 'package:google_sign_in/google_sign_in.dart';
-import '../../data/models/models.dart';
-import '../../data/datasources/local/sup_database.dart';
+import 'package:supready/data/models/models.dart';
+import 'package:supready/data/datasources/local/sup_database.dart';
 
 // ============================================================
 // SUPReady - Servicio de Autenticación Google

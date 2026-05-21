@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/theme/app_theme.dart';
-import '../../data/datasources/local/tracking_service.dart';
+import 'package:supready/core/theme/app_theme.dart';
+import 'package:supready/data/datasources/local/tracking_service.dart';
 
 // ============================================================
 // SUPReady - Pantalla de Tracking
