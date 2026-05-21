@@ -3,9 +3,8 @@ name: Build APK
 on:
   push:
     branches: [ main ]
-
-permissions:
-  contents: write
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -24,49 +23,16 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Generate Android project scaffold
-        run: flutter create --project-name supready --org com.supready --platforms android .
-
-      - name: Override Android files
-        run: |
-          # Only override app/build.gradle and manifest - keep flutter-generated root files
-          cp android_custom/app_build.gradle android/app/build.gradle
-          cp android_custom/AndroidManifest_custom.xml android/app/src/main/AndroidManifest.xml
-
-          # Fix MainActivity to v2 embedding
-          MAIN_KT=$(find android/app/src/main/kotlin -name "MainActivity.kt" | head -1)
-          cat > "$MAIN_KT" << 'KOTLIN'
-package com.supready.supready
-import io.flutter.embedding.android.FlutterActivity
-class MainActivity : FlutterActivity()
-KOTLIN
-          echo "=== app/build.gradle ==="
-          cat android/app/build.gradle
-          echo "=== MainActivity.kt ==="
-          cat "$MAIN_KT"
+      - name: Flutter doctor
+        run: flutter doctor -v
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze (non-blocking)
-        run: flutter analyze --no-fatal-infos 2>&1 || true
-
-      - name: Build APK debug
-        run: flutter build apk --debug 2>&1 | tee /tmp/build_output.txt; exit ${PIPESTATUS[0]}
-
-      - name: Write errors to repo on failure
-        if: failure()
-        run: |
-          echo "--- BUILD ERRORS $(date) ---" > BUILD_ERRORS.txt
-          tail -120 /tmp/build_output.txt >> BUILD_ERRORS.txt
-          git config user.email "ci@supready.app"
-          git config user.name "SUPReady CI"
-          git add BUILD_ERRORS.txt
-          git commit -m "ci: build errors [skip ci]" || true
-          git push || true
+      - name: Build debug APK
+        run: flutter build apk --debug --no-tree-shake-icons
 
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: supready-debug-apk

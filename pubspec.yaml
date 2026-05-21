@@ -26,7 +26,7 @@ dependencies:
   shared_preferences: ^2.2.3
 
   # GPS
-  geolocator: ^11.0.0
+  geolocator: ^10.1.0
   flutter_map: ^6.1.0
   latlong2: ^0.9.0
 
