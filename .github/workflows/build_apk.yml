@@ -27,33 +27,23 @@ jobs:
       - name: Generate Android project scaffold
         run: flutter create --project-name supready --org com.supready --platforms android .
 
-      - name: Apply custom AndroidManifest
-        run: cp android_custom/AndroidManifest_custom.xml android/app/src/main/AndroidManifest.xml
-
-      - name: Fix Android v2 embedding in AndroidManifest
+      - name: Override Android build files
         run: |
-          # Ensure FlutterActivity is used (v2 embedding)
-          MANIFEST=android/app/src/main/AndroidManifest.xml
-          # Replace any old FlutterActivity reference with v2
-          sed -i 's|io.flutter.app.FlutterActivity|io.flutter.embedding.android.FlutterActivity|g' $MANIFEST
-          # Add flutter_embedding metadata if not present
-          if ! grep -q "flutterEmbedding" $MANIFEST; then
-            sed -i 's|</application>|    <meta-data android:name="flutterEmbedding" android:value="2" />\n    </application>|' $MANIFEST
-          fi
-          echo "Manifest patched:"
-          cat $MANIFEST
+          # Apply our custom build.gradle with proper compileSdkVersion
+          cp android_custom/app_build.gradle android/app/build.gradle
+          cp android_custom/root_build.gradle android/build.gradle
+          cp android_custom/gradle_wrapper.properties android/gradle/wrapper/gradle-wrapper.properties
+          cp android_custom/AndroidManifest_custom.xml android/app/src/main/AndroidManifest.xml
 
-      - name: Fix MainActivity to use v2 embedding
-        run: |
+          # Fix MainActivity to use v2 embedding
           MAIN_KT=$(find android -name "MainActivity.kt" | head -1)
-          echo "Found: $MAIN_KT"
           cat > $MAIN_KT << 'KOTLIN'
-          package com.supready.supready
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity : FlutterActivity()
-          KOTLIN
-          echo "MainActivity.kt updated"
-          cat $MAIN_KT
+package com.supready.supready
+import io.flutter.embedding.android.FlutterActivity
+class MainActivity : FlutterActivity()
+KOTLIN
+          echo "All android files patched ✅"
+          cat android/app/build.gradle
 
       - name: Install dependencies
         run: flutter pub get
@@ -67,8 +57,8 @@ jobs:
       - name: Write errors to repo on failure
         if: failure()
         run: |
-          echo "--- ERRORS ---" > BUILD_ERRORS.txt
-          tail -80 /tmp/build_output.txt >> BUILD_ERRORS.txt
+          echo "--- BUILD ERRORS $(date) ---" > BUILD_ERRORS.txt
+          tail -100 /tmp/build_output.txt >> BUILD_ERRORS.txt
           git config user.email "ci@supready.app"
           git config user.name "SUPReady CI"
           git add BUILD_ERRORS.txt
