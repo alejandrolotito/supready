@@ -28,9 +28,8 @@ jobs:
         run: flutter pub get
 
       - name: Build debug APK
-        id: build
         run: |
-          flutter build apk --debug --no-tree-shake-icons 2>&1 | tee build_output.txt
+          flutter build apk --debug --no-tree-shake-icons --verbose 2>&1 | tee build_output.txt
           exit ${PIPESTATUS[0]}
 
       - name: Commit build log on failure
