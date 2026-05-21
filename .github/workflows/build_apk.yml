@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -24,23 +26,25 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build debug APK (capture errors)
+      - name: Build debug APK
+        id: build
         run: |
-          flutter build apk --debug --no-tree-shake-icons 2>&1 | tee /tmp/build_output.txt
+          flutter build apk --debug --no-tree-shake-icons 2>&1 | tee build_output.txt
           exit ${PIPESTATUS[0]}
 
-      - name: Upload APK
+      - name: Commit build log on failure
+        if: failure()
+        run: |
+          git config user.email "ci@github.com"
+          git config user.name "GitHub Actions"
+          git add build_output.txt
+          git commit -m "ci: build error log [skip ci]"
+          git push
+
+      - name: Upload APK artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: supready-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
-
-      - name: Upload build log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-error-log
-          path: /tmp/build_output.txt
-          retention-days: 7
