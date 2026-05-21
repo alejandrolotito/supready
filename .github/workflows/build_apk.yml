@@ -33,10 +33,21 @@ jobs:
       - name: Analyze (non-blocking)
         run: flutter analyze --no-fatal-infos 2>&1 || true
 
-      - name: Build APK debug
-        run: flutter build apk --debug
+      - name: Build APK debug (capture errors)
+        id: build
+        run: |
+          flutter build apk --debug 2>&1 | tee /tmp/build_output.txt
+          exit ${PIPESTATUS[0]}
 
-      - name: Upload APK
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: /tmp/build_output.txt
+
+      - name: Upload APK on success
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: supready-debug-apk
