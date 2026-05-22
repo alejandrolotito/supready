@@ -24,12 +24,19 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Show project structure
+        run: |
+          echo "=== Android dir ===" 
+          find android -name "*.xml" -o -name "*.gradle" -o -name "*.kt" | sort
+          echo "=== AndroidManifest ===" 
+          cat android/app/src/main/AndroidManifest.xml
+
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build debug APK
         run: |
-          flutter build apk --debug --no-tree-shake-icons --verbose 2>&1 | tee build_output.txt
+          flutter build apk --debug --no-tree-shake-icons --ignore-deprecation --verbose 2>&1 | tee build_output.txt
           exit ${PIPESTATUS[0]}
 
       - name: Commit build log on failure
