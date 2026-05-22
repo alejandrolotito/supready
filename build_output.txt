@@ -1,6 +1,4 @@
 
-[!] Your app isn't using AndroidX.
-    To avoid potential build failures, you can quickly migrate your app by following the steps on https://goo.gl/CP92wY .
 Running Gradle task 'assembleDebug'...                          
 
 FAILURE: Build completed with 3 failures.
@@ -40,7 +38,7 @@ A problem occurred configuring project ':geolocator_android'.
 -----------
 * What went wrong:
 Failed to query the value of property 'buildFlowServiceProperty'.
-> Could not isolate value org.jetbrains.kotlin.gradle.plugin.statistics.BuildFlowService$Parameters_Decorated@4e61c597 of type BuildFlowService.Parameters
+> Could not isolate value org.jetbrains.kotlin.gradle.plugin.statistics.BuildFlowService$Parameters_Decorated@2e764a0d of type BuildFlowService.Parameters
    > A problem occurred configuring project ':geolocator_android'.
       > Failed to notify project evaluation listener.
          > Cannot invoke method substring() on null object
@@ -53,6 +51,6 @@ Failed to query the value of property 'buildFlowServiceProperty'.
 > Get more help at https://help.gradle.org.
 ==============================================================================
 
-BUILD FAILED in 1m 45s
-Running Gradle task 'assembleDebug'...                            105.9s
+BUILD FAILED in 1m 36s
+Running Gradle task 'assembleDebug'...                             97.5s
 Gradle task assembleDebug failed with exit code 1
