@@ -1,7 +1,7 @@
-[  +25 ms] executing: uname -m
+[  +24 ms] executing: uname -m
 [  +10 ms] Exit code 0 from: uname -m
 [        ] x86_64
-[  +21 ms] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[  +20 ms] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
@@ -13,7 +13,7 @@
 [        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
-[  +38 ms] Artifact Instance of 'MaterialFonts' is not required, skipping update.
+[  +31 ms] Artifact Instance of 'MaterialFonts' is not required, skipping update.
 [        ] Artifact Instance of 'GradleWrapper' is not required, skipping update.
 [   +1 ms] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
@@ -34,7 +34,7 @@
 [        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'FontSubsetArtifacts' is not required, skipping update.
 [        ] Artifact Instance of 'PubDependencies' is not required, skipping update.
-[  +47 ms] "flutter apk" took 93ms.
+[  +43 ms] "flutter apk" took 82ms.
 [   +3 ms] Build failed due to use of deleted Android v1 embedding.
 [   +1 ms] 
            #0      throwToolExit (package:flutter_tools/src/base/common.dart:10:3)
