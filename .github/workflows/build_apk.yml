@@ -20,22 +20,20 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'   # Use latest stable, not pinned 3.24
-          cache: false         # Disable cache to get fresh install
-
-      - name: Flutter version
-        run: flutter --version
-
-      - name: Show manifest
-        run: cat android/app/src/main/AndroidManifest.xml
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build debug APK
         run: |
-          flutter build apk --debug --no-tree-shake-icons --verbose 2>&1 | tee build_output.txt
-          exit ${PIPESTATUS[0]}
+          set +e
+          flutter build apk --debug --no-tree-shake-icons > build_output.txt 2>&1
+          BUILD_EXIT=$?
+          cat build_output.txt
+          exit $BUILD_EXIT
 
       - name: Commit build log on failure
         if: failure()
