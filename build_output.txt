@@ -7,132 +7,47 @@ Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
 Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-lib/data/datasources/local/sup_database.dart:3:8: Error: Error when reading 'lib/data/datasources/models/models.dart': No such file or directory
-import '../models/models.dart';
+lib/data/datasources/remote/prevision_service.dart:3:8: Error: Error when reading 'lib/data/datasources/models/prevision_model.dart': No such file or directory
+import '../models/prevision_model.dart';
        ^
-lib/data/datasources/local/sup_database.dart:58:30: Error: Type 'UsuarioModel' not found.
-  Future<void> upsertUsuario(UsuarioModel u) async =>
-                             ^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:61:10: Error: Type 'UsuarioModel' not found.
-  Future<UsuarioModel?> getUsuarioByEmail(String email) async {
+lib/data/datasources/remote/prevision_service.dart:16:26: Error: Type 'PrevisionHoraria' not found.
+  final Map<String, List<PrevisionHoraria>> _cacheHorario = {};
+                         ^^^^^^^^^^^^^^^^
+lib/data/datasources/remote/prevision_service.dart:17:21: Error: Type 'DatosSolares' not found.
+  final Map<String, DatosSolares> _cacheSolar = {};
+                    ^^^^^^^^^^^^
+lib/data/datasources/remote/prevision_service.dart:20:15: Error: Type 'PrevisionHoraria' not found.
+  Future<List<PrevisionHoraria>> obtenerPrevisionHoraria({
+              ^^^^^^^^^^^^^^^^
+lib/data/datasources/remote/prevision_service.dart:52:10: Error: Type 'DatosSolares' not found.
+  Future<DatosSolares?> obtenerDatosSolares({
          ^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:67:15: Error: Type 'SpotModel' not found.
-  Future<List<SpotModel>> getSpots() async {
-              ^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:72:10: Error: Type 'SpotModel' not found.
-  Future<SpotModel?> getSpotFavorito() async {
-         ^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:77:28: Error: Type 'SpotModel' not found.
-  Future<int> insertarSpot(SpotModel spot) async =>
-                           ^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:87:28: Error: Type 'RutaTrazadaModel' not found.
-  Future<int> insertarRuta(RutaTrazadaModel r) async =>
-                           ^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:90:31: Error: Type 'RutaTrazadaModel' not found.
-  Future<void> actualizarRuta(RutaTrazadaModel r) async =>
-                              ^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:93:15: Error: Type 'RutaTrazadaModel' not found.
-  Future<List<RutaTrazadaModel>> getRutasPorUsuario(int uid) async {
-              ^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:99:15: Error: Type 'RutaTrazadaModel' not found.
-  Future<List<RutaTrazadaModel>> getAllRutas() async {
-              ^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:104:15: Error: Type 'RutaTrazadaModel' not found.
-  Future<List<RutaTrazadaModel>> getRutasSinSincronizar() async {
-              ^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:114:35: Error: Type 'CoordenadasRutaModel' not found.
-  Future<void> insertarCoordenada(CoordenadasRutaModel c) async =>
-                                  ^^^^^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:117:41: Error: Type 'CoordenadasRutaModel' not found.
-  Future<void> insertarCoordenadas(List<CoordenadasRutaModel> cs) async {
-                                        ^^^^^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:124:15: Error: Type 'CoordenadasRutaModel' not found.
-  Future<List<CoordenadasRutaModel>> getCoordenadas(int rutaId) async {
-              ^^^^^^^^^^^^^^^^^^^^
-lib/presentation/screens/spots/spots_screen.dart:29:21: Error: The getter 'spotId' isn't defined for the class 'Object?'.
- - 'Object' is from 'dart:core'.
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'spotId'.
-          spotId: s.spotId!, latitud: s.latitud, longitud: s.longitud);
-                    ^^^^^^
-lib/presentation/screens/spots/spots_screen.dart:29:41: Error: The getter 'latitud' isn't defined for the class 'Object?'.
- - 'Object' is from 'dart:core'.
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'latitud'.
-          spotId: s.spotId!, latitud: s.latitud, longitud: s.longitud);
-                                        ^^^^^^^
-lib/presentation/screens/spots/spots_screen.dart:29:62: Error: The getter 'longitud' isn't defined for the class 'Object?'.
- - 'Object' is from 'dart:core'.
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'longitud'.
-          spotId: s.spotId!, latitud: s.latitud, longitud: s.longitud);
-                                                             ^^^^^^^^
-lib/presentation/screens/spots/spots_screen.dart:30:16: Error: The method 'copyWith' isn't defined for the class 'Object?'.
- - 'Object' is from 'dart:core'.
-Try correcting the name to the name of an existing method, or defining a method named 'copyWith'.
-      return s.copyWith(condiciones: c);
-               ^^^^^^^^
-lib/presentation/screens/spots/spots_screen.dart:32:41: Error: A value of type 'List<Object?>' can't be assigned to a variable of type 'List<SpotModel>'.
- - 'List' is from 'dart:core'.
- - 'Object' is from 'dart:core'.
- - 'SpotModel' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
-    if (mounted) setState(() { _spots = spotsConClima; _cargando = false; });
-                                        ^
-lib/data/datasources/local/tracking_service.dart:112:44: Error: The getter 'longitud' isn't defined for the class 'Position'.
- - 'Position' is from 'package:geolocator_platform_interface/src/models/position.dart' ('../../../.pub-cache/hosted/pub.dev/geolocator_platform_interface-4.2.4/lib/src/models/position.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'longitud'.
-      latitud: pos.latitude, longitud: pos.longitud,
-                                           ^^^^^^^^
-lib/data/datasources/local/sup_database.dart:58:30: Error: 'UsuarioModel' isn't a type.
-  Future<void> upsertUsuario(UsuarioModel u) async =>
-                             ^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:63:34: Error: The getter 'UsuarioModel' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'UsuarioModel'.
-    return maps.isEmpty ? null : UsuarioModel.fromMap(maps.first);
-                                 ^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:69:21: Error: The getter 'SpotModel' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'SpotModel'.
-    return maps.map(SpotModel.fromMap).toList();
-                    ^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:74:34: Error: The getter 'SpotModel' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'SpotModel'.
-    return maps.isEmpty ? null : SpotModel.fromMap(maps.first);
-                                 ^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:77:28: Error: 'SpotModel' isn't a type.
-  Future<int> insertarSpot(SpotModel spot) async =>
-                           ^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:87:28: Error: 'RutaTrazadaModel' isn't a type.
-  Future<int> insertarRuta(RutaTrazadaModel r) async =>
-                           ^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:90:31: Error: 'RutaTrazadaModel' isn't a type.
-  Future<void> actualizarRuta(RutaTrazadaModel r) async =>
-                              ^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:96:21: Error: The getter 'RutaTrazadaModel' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'RutaTrazadaModel'.
-    return maps.map(RutaTrazadaModel.fromMap).toList();
-                    ^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:101:21: Error: The getter 'RutaTrazadaModel' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'RutaTrazadaModel'.
-    return maps.map(RutaTrazadaModel.fromMap).toList();
-                    ^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:107:21: Error: The getter 'RutaTrazadaModel' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'RutaTrazadaModel'.
-    return maps.map(RutaTrazadaModel.fromMap).toList();
-                    ^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:114:35: Error: 'CoordenadasRutaModel' isn't a type.
-  Future<void> insertarCoordenada(CoordenadasRutaModel c) async =>
-                                  ^^^^^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:117:41: Error: 'CoordenadasRutaModel' isn't a type.
-  Future<void> insertarCoordenadas(List<CoordenadasRutaModel> cs) async {
-                                        ^^^^^^^^^^^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:127:21: Error: The getter 'CoordenadasRutaModel' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'CoordenadasRutaModel'.
-    return maps.map(CoordenadasRutaModel.fromMap).toList();
-                    ^^^^^^^^^^^^^^^^^^^^
+lib/data/datasources/remote/prevision_service.dart:108:8: Error: Type 'PrevisionHoraria' not found.
+  List<PrevisionHoraria> _parsear(
+       ^^^^^^^^^^^^^^^^
+lib/data/datasources/remote/prevision_service.dart:16:26: Error: 'PrevisionHoraria' isn't a type.
+  final Map<String, List<PrevisionHoraria>> _cacheHorario = {};
+                         ^^^^^^^^^^^^^^^^
+lib/data/datasources/remote/prevision_service.dart:17:21: Error: 'DatosSolares' isn't a type.
+  final Map<String, DatosSolares> _cacheSolar = {};
+                    ^^^^^^^^^^^^
+lib/data/datasources/remote/prevision_service.dart:17:49: Error: A value of type 'Map<dynamic, dynamic>' can't be assigned to a variable of type 'Map<String, invalid-type>'.
+ - 'Map' is from 'dart:core'.
+  final Map<String, DatosSolares> _cacheSolar = {};
+                                                ^
+lib/data/datasources/remote/prevision_service.dart:74:21: Error: The method 'DatosSolares' isn't defined for the class 'PrevisionService'.
+ - 'PrevisionService' is from 'package:supready/data/datasources/remote/prevision_service.dart' ('lib/data/datasources/remote/prevision_service.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'DatosSolares'.
+      final solar = DatosSolares(
+                    ^^^^^^^^^^^^
+lib/data/datasources/remote/prevision_service.dart:127:20: Error: 'PrevisionHoraria' isn't a type.
+    final horas = <PrevisionHoraria>[];
+                   ^^^^^^^^^^^^^^^^
+lib/data/datasources/remote/prevision_service.dart:135:17: Error: The method 'PrevisionHoraria' isn't defined for the class 'PrevisionService'.
+ - 'PrevisionService' is from 'package:supready/data/datasources/remote/prevision_service.dart' ('lib/data/datasources/remote/prevision_service.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'PrevisionHoraria'.
+      horas.add(PrevisionHoraria(
+                ^^^^^^^^^^^^^^^^
 Target kernel_snapshot failed: Exception
 
 
@@ -149,5 +64,5 @@ Execution failed for task ':app:compileFlutterBuildDebug'.
 > Get more help at https://help.gradle.org.
 
 BUILD FAILED in 2m 26s
-Running Gradle task 'assembleDebug'...                            146.9s
+Running Gradle task 'assembleDebug'...                            147.1s
 Gradle task assembleDebug failed with exit code 1
