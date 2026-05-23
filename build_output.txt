@@ -1,56 +1,153 @@
 
 Running Gradle task 'assembleDebug'...                          
+Checking the license for package Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/licenses
+License for package Android SDK Build-Tools 33.0.1 accepted.
+Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" ready.
+Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
+lib/data/datasources/local/sup_database.dart:3:8: Error: Error when reading 'lib/data/datasources/models/models.dart': No such file or directory
+import '../models/models.dart';
+       ^
+lib/data/datasources/local/sup_database.dart:58:30: Error: Type 'UsuarioModel' not found.
+  Future<void> upsertUsuario(UsuarioModel u) async =>
+                             ^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:61:10: Error: Type 'UsuarioModel' not found.
+  Future<UsuarioModel?> getUsuarioByEmail(String email) async {
+         ^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:67:15: Error: Type 'SpotModel' not found.
+  Future<List<SpotModel>> getSpots() async {
+              ^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:72:10: Error: Type 'SpotModel' not found.
+  Future<SpotModel?> getSpotFavorito() async {
+         ^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:77:28: Error: Type 'SpotModel' not found.
+  Future<int> insertarSpot(SpotModel spot) async =>
+                           ^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:87:28: Error: Type 'RutaTrazadaModel' not found.
+  Future<int> insertarRuta(RutaTrazadaModel r) async =>
+                           ^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:90:31: Error: Type 'RutaTrazadaModel' not found.
+  Future<void> actualizarRuta(RutaTrazadaModel r) async =>
+                              ^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:93:15: Error: Type 'RutaTrazadaModel' not found.
+  Future<List<RutaTrazadaModel>> getRutasPorUsuario(int uid) async {
+              ^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:99:15: Error: Type 'RutaTrazadaModel' not found.
+  Future<List<RutaTrazadaModel>> getAllRutas() async {
+              ^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:104:15: Error: Type 'RutaTrazadaModel' not found.
+  Future<List<RutaTrazadaModel>> getRutasSinSincronizar() async {
+              ^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:114:35: Error: Type 'CoordenadasRutaModel' not found.
+  Future<void> insertarCoordenada(CoordenadasRutaModel c) async =>
+                                  ^^^^^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:117:41: Error: Type 'CoordenadasRutaModel' not found.
+  Future<void> insertarCoordenadas(List<CoordenadasRutaModel> cs) async {
+                                        ^^^^^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:124:15: Error: Type 'CoordenadasRutaModel' not found.
+  Future<List<CoordenadasRutaModel>> getCoordenadas(int rutaId) async {
+              ^^^^^^^^^^^^^^^^^^^^
+lib/presentation/screens/spots/spots_screen.dart:29:21: Error: The getter 'spotId' isn't defined for the class 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'spotId'.
+          spotId: s.spotId!, latitud: s.latitud, longitud: s.longitud);
+                    ^^^^^^
+lib/presentation/screens/spots/spots_screen.dart:29:41: Error: The getter 'latitud' isn't defined for the class 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'latitud'.
+          spotId: s.spotId!, latitud: s.latitud, longitud: s.longitud);
+                                        ^^^^^^^
+lib/presentation/screens/spots/spots_screen.dart:29:62: Error: The getter 'longitud' isn't defined for the class 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'longitud'.
+          spotId: s.spotId!, latitud: s.latitud, longitud: s.longitud);
+                                                             ^^^^^^^^
+lib/presentation/screens/spots/spots_screen.dart:30:16: Error: The method 'copyWith' isn't defined for the class 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing method, or defining a method named 'copyWith'.
+      return s.copyWith(condiciones: c);
+               ^^^^^^^^
+lib/presentation/screens/spots/spots_screen.dart:32:41: Error: A value of type 'List<Object?>' can't be assigned to a variable of type 'List<SpotModel>'.
+ - 'List' is from 'dart:core'.
+ - 'Object' is from 'dart:core'.
+ - 'SpotModel' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
+    if (mounted) setState(() { _spots = spotsConClima; _cargando = false; });
+                                        ^
+lib/data/datasources/local/tracking_service.dart:112:44: Error: The getter 'longitud' isn't defined for the class 'Position'.
+ - 'Position' is from 'package:geolocator_platform_interface/src/models/position.dart' ('../../../.pub-cache/hosted/pub.dev/geolocator_platform_interface-4.2.4/lib/src/models/position.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'longitud'.
+      latitud: pos.latitude, longitud: pos.longitud,
+                                           ^^^^^^^^
+lib/data/datasources/local/sup_database.dart:58:30: Error: 'UsuarioModel' isn't a type.
+  Future<void> upsertUsuario(UsuarioModel u) async =>
+                             ^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:63:34: Error: The getter 'UsuarioModel' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'UsuarioModel'.
+    return maps.isEmpty ? null : UsuarioModel.fromMap(maps.first);
+                                 ^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:69:21: Error: The getter 'SpotModel' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'SpotModel'.
+    return maps.map(SpotModel.fromMap).toList();
+                    ^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:74:34: Error: The getter 'SpotModel' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'SpotModel'.
+    return maps.isEmpty ? null : SpotModel.fromMap(maps.first);
+                                 ^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:77:28: Error: 'SpotModel' isn't a type.
+  Future<int> insertarSpot(SpotModel spot) async =>
+                           ^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:87:28: Error: 'RutaTrazadaModel' isn't a type.
+  Future<int> insertarRuta(RutaTrazadaModel r) async =>
+                           ^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:90:31: Error: 'RutaTrazadaModel' isn't a type.
+  Future<void> actualizarRuta(RutaTrazadaModel r) async =>
+                              ^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:96:21: Error: The getter 'RutaTrazadaModel' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'RutaTrazadaModel'.
+    return maps.map(RutaTrazadaModel.fromMap).toList();
+                    ^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:101:21: Error: The getter 'RutaTrazadaModel' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'RutaTrazadaModel'.
+    return maps.map(RutaTrazadaModel.fromMap).toList();
+                    ^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:107:21: Error: The getter 'RutaTrazadaModel' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'RutaTrazadaModel'.
+    return maps.map(RutaTrazadaModel.fromMap).toList();
+                    ^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:114:35: Error: 'CoordenadasRutaModel' isn't a type.
+  Future<void> insertarCoordenada(CoordenadasRutaModel c) async =>
+                                  ^^^^^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:117:41: Error: 'CoordenadasRutaModel' isn't a type.
+  Future<void> insertarCoordenadas(List<CoordenadasRutaModel> cs) async {
+                                        ^^^^^^^^^^^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:127:21: Error: The getter 'CoordenadasRutaModel' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'CoordenadasRutaModel'.
+    return maps.map(CoordenadasRutaModel.fromMap).toList();
+                    ^^^^^^^^^^^^^^^^^^^^
+Target kernel_snapshot failed: Exception
 
-FAILURE: Build completed with 3 failures.
 
-1: Task failed with an exception.
------------
-* Where:
-Build file '/home/runner/.pub-cache/hosted/pub.dev/geolocator_android-4.6.2/android/build.gradle' line: 29
+FAILURE: Build failed with an exception.
 
 * What went wrong:
-A problem occurred evaluating project ':geolocator_android'.
-> Could not get unknown property 'flutter' for extension 'android' of type com.android.build.gradle.LibraryExtension.
+Execution failed for task ':app:compileFlutterBuildDebug'.
+> Process 'command '/opt/hostedtoolcache/flutter/stable-3.22.3-x64/flutter/bin/flutter'' finished with non-zero exit value 1
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
-==============================================================================
 
-2: Task failed with an exception.
------------
-* What went wrong:
-A problem occurred configuring project ':geolocator_android'.
-> Failed to notify project evaluation listener.
-   > Cannot invoke method substring() on null object
-   > compileSdkVersion is not specified. Please add it to build.gradle
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-==============================================================================
-
-3: Task failed with an exception.
------------
-* What went wrong:
-Failed to query the value of property 'buildFlowServiceProperty'.
-> Could not isolate value org.jetbrains.kotlin.gradle.plugin.statistics.BuildFlowService$Parameters_Decorated@2e764a0d of type BuildFlowService.Parameters
-   > A problem occurred configuring project ':geolocator_android'.
-      > Failed to notify project evaluation listener.
-         > Cannot invoke method substring() on null object
-         > compileSdkVersion is not specified. Please add it to build.gradle
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-==============================================================================
-
-BUILD FAILED in 1m 36s
-Running Gradle task 'assembleDebug'...                             97.5s
+BUILD FAILED in 2m 26s
+Running Gradle task 'assembleDebug'...                            146.9s
 Gradle task assembleDebug failed with exit code 1
