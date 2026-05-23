@@ -1,21 +1,25 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../models/models.dart';
 import 'sup_database.dart';
 
 // ============================================================
-// SUPReady v3 - Servicio de Trackeo GPS
-// - Velocidad real por coordenada (para tramos coloreados)
-// - GPS cada 5s, offline first
-// - SOS automático 15 min sin movimiento
+// SUPReady v3.3 - Servicio de Trackeo GPS
+// FIXES:
+//   - Pausar timer SOS cuando app va a background (cámara, etc.)
+//   - Estado recuperable: cancelar SOS no destruye la sesión
+//   - Velocidad real por coordenada
 // ============================================================
 
 enum EstadoTracking { inactivo, activo, pausado, finalizado }
 
-class TrackingService {
+class TrackingService with WidgetsBindingObserver {
   static final TrackingService instance = TrackingService._();
-  TrackingService._();
+  TrackingService._() {
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   EstadoTracking _estado = EstadoTracking.inactivo;
   int? _rutaId;
@@ -26,20 +30,48 @@ class TrackingService {
   Position? _ultimaPos;
   DateTime? _ultimaVariacion;
 
-  final _estadoCtrl    = StreamController<EstadoTracking>.broadcast();
-  final _coordCtrl     = StreamController<CoordenadasRutaModel>.broadcast();
-  final _metricasCtrl  = StreamController<MetricasTracking>.broadcast();
-  final _sosCtrl       = StreamController<void>.broadcast();
+  // Cuando la app va a background, guardamos el momento para compensar al volver
+  DateTime? _backgroundAt;
+  bool _enBackground = false;
 
-  Stream<EstadoTracking>        get estadoStream   => _estadoCtrl.stream;
-  Stream<CoordenadasRutaModel>  get coordenadaStream => _coordCtrl.stream;
-  Stream<MetricasTracking>      get metricasStream  => _metricasCtrl.stream;
-  Stream<void>                  get sosStream       => _sosCtrl.stream;
+  final _estadoCtrl   = StreamController<EstadoTracking>.broadcast();
+  final _coordCtrl    = StreamController<CoordenadasRutaModel>.broadcast();
+  final _metricasCtrl = StreamController<MetricasTracking>.broadcast();
+  final _sosCtrl      = StreamController<void>.broadcast();
+
+  Stream<EstadoTracking>       get estadoStream    => _estadoCtrl.stream;
+  Stream<CoordenadasRutaModel> get coordenadaStream => _coordCtrl.stream;
+  Stream<MetricasTracking>     get metricasStream   => _metricasCtrl.stream;
+  Stream<void>                 get sosStream        => _sosCtrl.stream;
 
   StreamSubscription<Position>? _gpsSub;
   Timer? _sosTimer;
 
   EstadoTracking get estado => _estado;
+  bool get activo => _estado == EstadoTracking.activo;
+
+  // ─── AppLifecycleObserver: pausa SOS cuando va a background ───
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!activo) return;
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _enBackground = true;
+      _backgroundAt = DateTime.now();
+      _sosTimer?.cancel(); // Pausar timer SOS — el usuario salió a otra app
+    } else if (state == AppLifecycleState.resumed) {
+      if (_enBackground) {
+        _enBackground = false;
+        // Compensar: extender la ventana de "última variación" con el tiempo en background
+        if (_backgroundAt != null && _ultimaVariacion != null) {
+          final tiempoFuera = DateTime.now().difference(_backgroundAt!);
+          _ultimaVariacion = _ultimaVariacion!.add(tiempoFuera);
+        }
+        _backgroundAt = null;
+        // Reanudar timer SOS solo si sigue activo
+        if (_estado == EstadoTracking.activo) _iniciarSOS();
+      }
+    }
+  }
 
   Future<bool> iniciarTracking({required int usuarioId, required int spotId}) async {
     if (!await _checkPermisos()) return false;
@@ -48,8 +80,10 @@ class TrackingService {
     _inicio = DateTime.now();
     _secuencia = 0; _distanciaKm = 0.0; _velMax = 0.0;
     _ultimaVariacion = DateTime.now();
+    _enBackground = false;
 
-    final ruta = RutaTrazadaModel(usuarioId: usuarioId, spotId: spotId, iniciadaEn: _inicio!);
+    final ruta = RutaTrazadaModel(
+        usuarioId: usuarioId, spotId: spotId, iniciadaEn: _inicio!);
     _rutaId = await SupDatabase.instance.insertarRuta(ruta);
 
     _estadoCtrl.add(_estado);
@@ -60,10 +94,12 @@ class TrackingService {
 
   Future<RutaTrazadaModel?> finalizarTracking() async {
     if (_rutaId == null || _estado != EstadoTracking.activo) return null;
-    _gpsSub?.cancel(); _sosTimer?.cancel();
+    _gpsSub?.cancel();
+    _sosTimer?.cancel();
     _estado = EstadoTracking.finalizado;
 
-    final duracion = _inicio != null ? DateTime.now().difference(_inicio!).inMinutes : 0;
+    final duracion = _inicio != null
+        ? DateTime.now().difference(_inicio!).inMinutes : 0;
     final velMedia = duracion > 0 ? _distanciaKm / (duracion / 60) : 0.0;
 
     final ruta = RutaTrazadaModel(
@@ -77,22 +113,33 @@ class TrackingService {
     return ruta;
   }
 
+  /// Reiniciar estado: llamar después de cancelar el SOS o al volver de un error.
+  /// NO finaliza la ruta — solo reinicia el timer y vuelve a activo.
+  void confirmarEstoyBien() {
+    if (_estado != EstadoTracking.activo) return;
+    _ultimaVariacion = DateTime.now();
+    _sosTimer?.cancel();
+    _iniciarSOS(); // Reinicia el contador desde cero
+  }
+
   void _iniciarGPS() {
-    _gpsSub = Geolocator.getPositionStream(locationSettings: const LocationSettings(
-      accuracy: LocationAccuracy.best, distanceFilter: 5,
-    )).listen(_procesarPos);
+    _gpsSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best, distanceFilter: 5),
+    ).listen(_procesarPos);
   }
 
   void _procesarPos(Position pos) async {
     if (_estado != EstadoTracking.activo || _rutaId == null) return;
 
-    // Velocidad real del GPS (m/s → km/h)
     final velKmh = pos.speed * 3.6;
     if (velKmh > _velMax) _velMax = velKmh;
 
     if (_ultimaPos != null) {
-      final dist = _haversine(_ultimaPos!.latitude, _ultimaPos!.longitude, pos.latitude, pos.longitude);
-      if (dist > 0.002) { // filtrar jitter < 2m
+      final dist = _haversine(
+          _ultimaPos!.latitude, _ultimaPos!.longitude,
+          pos.latitude, pos.longitude);
+      if (dist > 0.002) {
         _distanciaKm += dist;
         _ultimaVariacion = DateTime.now();
       }
@@ -100,12 +147,14 @@ class TrackingService {
 
     final coord = CoordenadasRutaModel(
       rutaId: _rutaId!, latitud: pos.latitude, longitud: pos.longitude,
-      secuencia: _secuencia++, velocidadKmh: velKmh, timestamp: DateTime.now(),
+      secuencia: _secuencia++, velocidadKmh: velKmh,
+      timestamp: DateTime.now(),
     );
     await SupDatabase.instance.insertarCoordenada(coord);
     _coordCtrl.add(coord);
 
-    final duracion = _inicio != null ? DateTime.now().difference(_inicio!).inMinutes : 0;
+    final duracion = _inicio != null
+        ? DateTime.now().difference(_inicio!).inMinutes : 0;
     _metricasCtrl.add(MetricasTracking(
       distanciaKm: _distanciaKm, velocidadActualKmh: velKmh,
       velocidadMaximaKmh: _velMax, duracionMinutos: duracion,
@@ -115,8 +164,9 @@ class TrackingService {
   }
 
   void _iniciarSOS() {
+    _sosTimer?.cancel();
     _sosTimer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (_ultimaVariacion == null) return;
+      if (_enBackground || _ultimaVariacion == null) return;
       if (DateTime.now().difference(_ultimaVariacion!).inMinutes >= 15) {
         _sosCtrl.add(null);
         _sosTimer?.cancel();
@@ -127,7 +177,8 @@ class TrackingService {
   double _haversine(double lat1, double lon1, double lat2, double lon2) {
     const R = 6371.0;
     final dLat = _rad(lat2 - lat1), dLon = _rad(lon2 - lon1);
-    final a = sin(dLat/2)*sin(dLat/2) + cos(_rad(lat1))*cos(_rad(lat2))*sin(dLon/2)*sin(dLon/2);
+    final a = sin(dLat/2)*sin(dLat/2) +
+        cos(_rad(lat1))*cos(_rad(lat2))*sin(dLon/2)*sin(dLon/2);
     return R * 2 * atan2(sqrt(a), sqrt(1-a));
   }
 
@@ -141,8 +192,10 @@ class TrackingService {
   }
 
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _gpsSub?.cancel(); _sosTimer?.cancel();
-    _estadoCtrl.close(); _coordCtrl.close(); _metricasCtrl.close(); _sosCtrl.close();
+    _estadoCtrl.close(); _coordCtrl.close();
+    _metricasCtrl.close(); _sosCtrl.close();
   }
 }
 

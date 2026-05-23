@@ -8,6 +8,7 @@ import 'presentation/screens/spots/spots_screen.dart';
 import 'presentation/screens/academy/academy_screen.dart';
 import 'presentation/screens/profile/profile_screen.dart';
 import 'presentation/screens/historial/historial_screen.dart';
+import 'presentation/screens/prevision/prevision_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,15 +36,15 @@ final _router = GoRouter(
     ShellRoute(
       builder: (context, state, child) => _MainShell(child: child),
       routes: [
-        GoRoute(path: '/home',     builder: (_, __) => const HomeScreen()),
-        GoRoute(path: '/spots',    builder: (_, __) => const SpotsScreen()),
-        GoRoute(path: '/track',    builder: (_, __) => const TrackingScreen()),
-        GoRoute(path: '/academy',  builder: (_, __) => const AcademyScreen()),
-        GoRoute(path: '/profile',  builder: (_, __) => const ProfileScreen()),
+        GoRoute(path: '/home',      builder: (_, __) => const HomeScreen()),
+        GoRoute(path: '/spots',     builder: (_, __) => const SpotsScreen()),
+        GoRoute(path: '/track',     builder: (_, __) => const TrackingScreen()),
+        GoRoute(path: '/prevision', builder: (_, __) => const PrevisionScreen()),
+        GoRoute(path: '/academy',   builder: (_, __) => const AcademyScreen()),
       ],
     ),
-    // Historial fuera del shell (pantalla completa)
     GoRoute(path: '/historial', builder: (_, __) => const HistorialScreen()),
+    GoRoute(path: '/profile',   builder: (_, __) => const ProfileScreen()),
   ],
 );
 
@@ -55,19 +56,19 @@ class _MainShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     final tabs = [
-      (path: '/home',    icon: Icons.home_outlined,          selIcon: Icons.home,         label: 'Inicio'),
-      (path: '/spots',   icon: Icons.location_on_outlined,   selIcon: Icons.location_on,  label: 'Spots'),
-      (path: '/track',   icon: Icons.surfing,                selIcon: Icons.surfing,       label: 'Remada'),
-      (path: '/academy', icon: Icons.school_outlined,        selIcon: Icons.school,        label: 'Academia'),
-      (path: '/profile', icon: Icons.person_outline,         selIcon: Icons.person,        label: 'Perfil'),
+      (path: '/home',      icon: Icons.home_outlined,         selIcon: Icons.home,             label: 'Inicio'),
+      (path: '/spots',     icon: Icons.location_on_outlined,  selIcon: Icons.location_on,      label: 'Spots'),
+      (path: '/track',     icon: Icons.surfing,               selIcon: Icons.surfing,           label: 'Remar'),
+      (path: '/prevision', icon: Icons.wb_cloudy_outlined,    selIcon: Icons.wb_cloudy,         label: 'Tiempo'),
+      (path: '/academy',   icon: Icons.school_outlined,       selIcon: Icons.school,            label: 'Academia'),
     ];
-    final currentIndex = tabs.indexWhere((t) => t.path == location).clamp(0, tabs.length - 1);
+    final idx = tabs.indexWhere((t) => t.path == location).clamp(0, tabs.length - 1);
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
         backgroundColor: SupColors.surface,
         indicatorColor: SupColors.cyanNeonDim,
-        selectedIndex: currentIndex,
+        selectedIndex: idx,
         onDestinationSelected: (i) => context.go(tabs[i].path),
         labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
         destinations: tabs.map((t) => NavigationDestination(
