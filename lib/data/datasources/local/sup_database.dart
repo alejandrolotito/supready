@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../models/models.dart';
+import '../../models/models.dart';
 
 class SupDatabase {
   static final SupDatabase instance = SupDatabase._init();

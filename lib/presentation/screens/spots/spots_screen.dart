@@ -24,7 +24,7 @@ class _SpotsScreenState extends State<SpotsScreen> {
     setState(() => _cargando = true);
     final spotsDB = await SupDatabase.instance.getSpots();
     // Carga clima en paralelo para todos los spots
-    final spotsConClima = await Future.wait(spotsDB.map((s) async {
+    final spotsConClima = await Future.wait<SpotModel>(spotsDB.map((s) async {
       final c = await ClimaService.instance.obtenerCondiciones(
           spotId: s.spotId!, latitud: s.latitud, longitud: s.longitud);
       return s.copyWith(condiciones: c);
