@@ -91,7 +91,7 @@ class TrackingService {
     if (velKmh > _velMax) _velMax = velKmh;
 
     if (_ultimaPos != null) {
-      final dist = _haversine(_ultimaPos!.latitude, _ultimaPos!.longitude, pos.latitude, pos.longitudee);
+      final dist = _haversine(_ultimaPos!.latitude, _ultimaPos!.longitude, pos.latitude, pos.longitude);
       if (dist > 0.002) { // filtrar jitter < 2m
         _distanciaKm += dist;
         _ultimaVariacion = DateTime.now();
@@ -99,7 +99,7 @@ class TrackingService {
     }
 
     final coord = CoordenadasRutaModel(
-      rutaId: _rutaId!, latitud: pos.latitude, longitud: pos.longitudee,
+      rutaId: _rutaId!, latitud: pos.latitude, longitud: pos.longitude,
       secuencia: _secuencia++, velocidadKmh: velKmh, timestamp: DateTime.now(),
     );
     await SupDatabase.instance.insertarCoordenada(coord);
