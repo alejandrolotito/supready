@@ -3,86 +3,84 @@ import 'package:http/http.dart' as http;
 import '../../models/models.dart';
 
 // ============================================================
-// SUPReady - Servicio de Clima Marítimo
-// Open-Meteo Marine API — gratuita, sin API key
-// https://marine-api.open-meteo.com
-// Refresco: cada 30 min por spot (cache local)
+// SUPReady v3 - Servicio de Clima Marítimo
+// Open-Meteo Marine API + Forecast API — gratuitas, sin API key
+// Datos: viento (kts), ráfagas, olas, dirección, temp agua
+// Refresco: cache 30 min por spot
 // ============================================================
 
 class ClimaService {
   static final ClimaService instance = ClimaService._();
   ClimaService._();
 
-  static const _baseUrl = 'https://marine-api.open-meteo.com/v1/marine';
-  static const _windUrl = 'https://api.open-meteo.com/v1/forecast';
+  static const _marineUrl = 'https://marine-api.open-meteo.com/v1/marine';
+  static const _forecastUrl = 'https://api.open-meteo.com/v1/forecast';
 
-  // Cache en memoria: spotId → condiciones
   final Map<int, CondicionesClimaticasModel> _cache = {};
 
   Future<CondicionesClimaticasModel?> obtenerCondiciones({
     required int spotId,
     required double latitud,
     required double longitud,
-    bool forzarActualizacion = false,
+    bool forzar = false,
   }) async {
-    // Retornar cache si está vigente
-    if (!forzarActualizacion && _cache.containsKey(spotId)) {
-      final cached = _cache[spotId]!;
-      if (!cached.cacheExpirada) return cached;
+    if (!forzar && _cache.containsKey(spotId) && !_cache[spotId]!.cacheExpirada) {
+      return _cache[spotId];
     }
-
     try {
-      // Llamada paralela: olas (Marine API) + viento (Forecast API)
       final results = await Future.wait([
-        _fetchOlas(latitud, longitud),
+        _fetchMarine(latitud, longitud),
         _fetchViento(latitud, longitud),
       ]);
-
-      final olas = results[0] as Map<String, dynamic>;
-      final viento = results[1] as Map<String, dynamic>;
-
-      final condiciones = _parsear(olas, viento);
+      final condiciones = _parsear(results[0], results[1]);
       _cache[spotId] = condiciones;
       return condiciones;
-    } catch (e) {
-      // Sin conexión: devolver cache vencido si existe
-      return _cache[spotId];
+    } catch (_) {
+      return _cache[spotId]; // devuelve cache vencida si hay
     }
   }
 
-  Future<Map<String, dynamic>> _fetchOlas(double lat, double lon) async {
-    final uri = Uri.parse('$_baseUrl?'
-        'latitude=$lat&longitude=$lon'
-        '&hourly=wave_height,wave_direction,wave_period'
-        '&forecast_days=1&timezone=auto');
-    final resp = await http.get(uri).timeout(const Duration(seconds: 10));
+  Future<Map<String, dynamic>> _fetchMarine(double lat, double lon) async {
+    final uri = Uri.parse(
+      '$_marineUrl?latitude=$lat&longitude=$lon'
+      '&hourly=wave_height,wave_direction,wave_period,sea_surface_temperature'
+      '&current=wave_height,wave_direction'
+      '&forecast_days=1&timezone=auto',
+    );
+    final resp = await http.get(uri).timeout(const Duration(seconds: 12));
+    if (resp.statusCode != 200) throw Exception('Marine API ${resp.statusCode}');
     return json.decode(resp.body) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> _fetchViento(double lat, double lon) async {
-    final uri = Uri.parse('$_windUrl?'
-        'latitude=$lat&longitude=$lon'
-        '&hourly=windspeed_10m,windgusts_10m,winddirection_10m'
-        '&forecast_days=1&timezone=auto&windspeed_unit=kn');
-    final resp = await http.get(uri).timeout(const Duration(seconds: 10));
+    final uri = Uri.parse(
+      '$_forecastUrl?latitude=$lat&longitude=$lon'
+      '&hourly=windspeed_10m,windgusts_10m,winddirection_10m'
+      '&current=windspeed_10m,windgusts_10m,winddirection_10m'
+      '&forecast_days=1&timezone=auto&windspeed_unit=kn',
+    );
+    final resp = await http.get(uri).timeout(const Duration(seconds: 12));
+    if (resp.statusCode != 200) throw Exception('Forecast API ${resp.statusCode}');
     return json.decode(resp.body) as Map<String, dynamic>;
   }
 
   CondicionesClimaticasModel _parsear(
-    Map<String, dynamic> olas,
+    Map<String, dynamic> marine,
     Map<String, dynamic> viento,
   ) {
-    // Tomar el valor de la hora actual
-    final now = DateTime.now();
-    final horaIdx = now.hour;
+    // Priorizar datos "current" (tiempo real) sobre hourly
+    final marCurrent = marine['current'] as Map<String, dynamic>?;
+    final vCurrent   = viento['current']  as Map<String, dynamic>?;
+    final mHourly    = marine['hourly']   as Map<String, dynamic>?;
+    final vHourly    = viento['hourly']   as Map<String, dynamic>?;
 
-    final olasH = olas['hourly'];
-    final vientoH = viento['hourly'];
+    final hora = DateTime.now().hour;
 
-    final waveH   = _safeDouble(olasH?['wave_height'],   horaIdx);
-    final windKts = _safeDouble(vientoH?['windspeed_10m'],   horaIdx);
-    final gustKts = _safeDouble(vientoH?['windgusts_10m'],   horaIdx);
-    final windDir = _safeDouble(vientoH?['winddirection_10m'], horaIdx);
+    final waveH   = _num(marCurrent?['wave_height'])  ?? _numAt(mHourly?['wave_height'], hora);
+    final windKts = _num(vCurrent?['windspeed_10m'])   ?? _numAt(vHourly?['windspeed_10m'], hora);
+    final gustKts = _num(vCurrent?['windgusts_10m'])   ?? _numAt(vHourly?['windgusts_10m'], hora);
+    final windDir = _num(vCurrent?['winddirection_10m']) ?? _numAt(vHourly?['winddirection_10m'], hora);
+    final sst     = _numAt(mHourly?['sea_surface_temperature'], hora); // °C, puede ser null
 
     return CondicionesClimaticasModel(
       vientoKts: windKts,
@@ -91,19 +89,17 @@ class ClimaService {
       dirVientoGrados: windDir,
       esOffshore: _esOffshore(windDir),
       esCrossShore: _esCrossShore(windDir),
-      actualizadoEn: now,
+      tempAguaC: sst,
+      actualizadoEn: DateTime.now(),
     );
   }
 
-  double _safeDouble(dynamic list, int idx) {
-    if (list == null) return 0.0;
-    if (list is List && idx < list.length) {
-      return (list[idx] as num?)?.toDouble() ?? 0.0;
-    }
-    return 0.0;
+  double _num(dynamic v) => v == null ? 0.0 : (v as num).toDouble();
+  double _numAt(dynamic list, int idx) {
+    if (list == null || list is! List || idx >= list.length) return 0.0;
+    return (list[idx] as num?)?.toDouble() ?? 0.0;
   }
 
-  // Simplificado: refinamiento real requiere orientación de la costa del spot
   bool _esOffshore(double dir) => dir >= 315 || dir <= 45;
   bool _esCrossShore(double dir) =>
       (dir > 45 && dir < 135) || (dir > 225 && dir < 315);
