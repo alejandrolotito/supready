@@ -180,3 +180,94 @@ class CoordenadasRutaModel {
     timestamp: DateTime.parse(m['timestamp'] as String),
   );
 }
+
+// ─── SALIDAS GRUPALES ─────────────────────────────────────────
+
+enum NivelSalida { todos, principiante, intermedio, avanzado }
+enum EstadoSalida { abierta, enCurso, finalizada, cancelada }
+enum EstadoParticipante { confirmado, enEspera, remando, finalizado }
+
+class SalidaGrupal {
+  final String? salidaId;
+  final int organizadorId;
+  final int spotId;
+  final String spotNombre;
+  final DateTime fechaHora;
+  final NivelSalida nivelMinimo;
+  final int cuposMax;
+  final bool esPublica;
+  final EstadoSalida estado;
+  final String descripcion;
+  final List<ParticipanteSalida> participantes;
+
+  const SalidaGrupal({
+    this.salidaId,
+    required this.organizadorId,
+    required this.spotId,
+    required this.spotNombre,
+    required this.fechaHora,
+    this.nivelMinimo = NivelSalida.todos,
+    this.cuposMax = 10,
+    this.esPublica = true,
+    this.estado = EstadoSalida.abierta,
+    this.descripcion = '',
+    this.participantes = const [],
+  });
+
+  int get cuposDisponibles => cuposMax - participantes.length;
+  bool get llena => cuposDisponibles <= 0;
+  bool get activa => estado == EstadoSalida.abierta || estado == EstadoSalida.enCurso;
+
+  Map<String, dynamic> toMap() => {
+    'salida_id': salidaId,
+    'organizador_id': organizadorId,
+    'spot_id': spotId,
+    'spot_nombre': spotNombre,
+    'fecha_hora': fechaHora.toIso8601String(),
+    'nivel_minimo': nivelMinimo.name,
+    'cupos_max': cuposMax,
+    'es_publica': esPublica ? 1 : 0,
+    'estado': estado.name,
+    'descripcion': descripcion,
+  };
+
+  factory SalidaGrupal.fromMap(Map<String, dynamic> m) => SalidaGrupal(
+    salidaId: m['salida_id']?.toString(),
+    organizadorId: m['organizador_id'] as int,
+    spotId: m['spot_id'] as int,
+    spotNombre: m['spot_nombre'] as String? ?? '',
+    fechaHora: DateTime.parse(m['fecha_hora'] as String),
+    nivelMinimo: NivelSalida.values.firstWhere(
+        (e) => e.name == m['nivel_minimo'], orElse: () => NivelSalida.todos),
+    cuposMax: m['cupos_max'] as int? ?? 10,
+    esPublica: (m['es_publica'] as int? ?? 1) == 1,
+    estado: EstadoSalida.values.firstWhere(
+        (e) => e.name == m['estado'], orElse: () => EstadoSalida.abierta),
+    descripcion: m['descripcion'] as String? ?? '',
+  );
+}
+
+class ParticipanteSalida {
+  final int usuarioId;
+  final String nombre;
+  final String? avatarUrl;
+  final EstadoParticipante estado;
+
+  const ParticipanteSalida({
+    required this.usuarioId,
+    required this.nombre,
+    this.avatarUrl,
+    this.estado = EstadoParticipante.confirmado,
+  });
+}
+
+extension SalidaGrupalExt on SalidaGrupal {
+  SalidaGrupal copyWithParticipantes(List<ParticipanteSalida> participantes) =>
+      SalidaGrupal(
+        salidaId: salidaId, organizadorId: organizadorId,
+        spotId: spotId, spotNombre: spotNombre, fechaHora: fechaHora,
+        nivelMinimo: nivelMinimo, cuposMax: cuposMax,
+        esPublica: esPublica, estado: estado, descripcion: descripcion,
+        participantes: participantes,
+      );
+}

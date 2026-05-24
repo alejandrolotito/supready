@@ -127,3 +127,71 @@ class SupDatabase {
     return maps.map(CoordenadasRutaModel.fromMap).toList();
   }
 }
+
+  // ─── SALIDAS GRUPALES (tabla local, sync pendiente con Firebase) ───
+  Future<void> _crearTablaSalidas(Database db) async {
+    await db.execute('''CREATE TABLE IF NOT EXISTS salidas_grupales(
+      salida_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      organizador_id INTEGER NOT NULL,
+      spot_id INTEGER NOT NULL,
+      spot_nombre TEXT NOT NULL,
+      fecha_hora TEXT NOT NULL,
+      nivel_minimo TEXT DEFAULT 'todos',
+      cupos_max INTEGER DEFAULT 10,
+      es_publica INTEGER DEFAULT 1,
+      estado TEXT DEFAULT 'abierta',
+      descripcion TEXT DEFAULT '',
+      sincronizado INTEGER DEFAULT 0)''');
+
+    await db.execute('''CREATE TABLE IF NOT EXISTS salida_participantes(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      salida_id INTEGER NOT NULL,
+      usuario_id INTEGER NOT NULL,
+      nombre TEXT NOT NULL,
+      avatar_url TEXT,
+      estado TEXT DEFAULT 'confirmado',
+      UNIQUE(salida_id, usuario_id))''');
+  }
+
+  Future<int> crearSalida(SalidaGrupal s) async {
+    final db = await database;
+    await _crearTablaSalidas(db);
+    return db.insert('salidas_grupales', s.toMap());
+  }
+
+  Future<List<SalidaGrupal>> getSalidas({bool soloPublicas = false}) async {
+    final db = await database;
+    await _crearTablaSalidas(db);
+    final where = soloPublicas ? 'es_publica=1 AND estado!=\'cancelada\'' : 'estado!=\'cancelada\'';
+    final maps = await db.query('salidas_grupales',
+        where: where, orderBy: 'fecha_hora ASC');
+    final salidas = <SalidaGrupal>[];
+    for (final m in maps) {
+      final parts = await db.query('salida_participantes',
+          where: 'salida_id=?', whereArgs: [m['salida_id']]);
+      salidas.add(SalidaGrupal.fromMap(m).copyWithParticipantes(
+          parts.map((p) => ParticipanteSalida(
+            usuarioId: p['usuario_id'] as int,
+            nombre: p['nombre'] as String,
+            avatarUrl: p['avatar_url'] as String?,
+            estado: EstadoParticipante.values.firstWhere(
+                (e) => e.name == p['estado'], orElse: () => EstadoParticipante.confirmado),
+          )).toList()));
+    }
+    return salidas;
+  }
+
+  Future<void> anotarseEnSalida(int salidaId, ParticipanteSalida p) async {
+    final db = await database;
+    await _crearTablaSalidas(db);
+    await db.insert('salida_participantes', {
+      'salida_id': salidaId, 'usuario_id': p.usuarioId,
+      'nombre': p.nombre, 'avatar_url': p.avatarUrl, 'estado': p.estado.name,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<void> cancelarSalida(int salidaId) async {
+    final db = await database;
+    await db.update('salidas_grupales', {'estado': 'cancelada'},
+        where: 'salida_id=?', whereArgs: [salidaId]);
+  }

@@ -9,6 +9,7 @@ import 'presentation/screens/academy/academy_screen.dart';
 import 'presentation/screens/profile/profile_screen.dart';
 import 'presentation/screens/historial/historial_screen.dart';
 import 'presentation/screens/prevision/prevision_screen.dart';
+import 'presentation/screens/salidas/salidas_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,11 +41,12 @@ final _router = GoRouter(
         GoRoute(path: '/spots',     builder: (_, __) => const SpotsScreen()),
         GoRoute(path: '/track',     builder: (_, __) => const TrackingScreen()),
         GoRoute(path: '/prevision', builder: (_, __) => const PrevisionScreen()),
-        GoRoute(path: '/academy',   builder: (_, __) => const AcademyScreen()),
+        GoRoute(path: '/salidas',   builder: (_, __) => const SalidasScreen()),
       ],
     ),
     GoRoute(path: '/historial', builder: (_, __) => const HistorialScreen()),
     GoRoute(path: '/profile',   builder: (_, __) => const ProfileScreen()),
+    GoRoute(path: '/academy',   builder: (_, __) => const AcademyScreen()),
   ],
 );
 
@@ -56,11 +58,11 @@ class _MainShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     final tabs = [
-      (path: '/home',      icon: Icons.home_outlined,         selIcon: Icons.home,             label: 'Inicio'),
-      (path: '/spots',     icon: Icons.location_on_outlined,  selIcon: Icons.location_on,      label: 'Spots'),
-      (path: '/track',     icon: Icons.surfing,               selIcon: Icons.surfing,           label: 'Remar'),
-      (path: '/prevision', icon: Icons.wb_cloudy_outlined,    selIcon: Icons.wb_cloudy,         label: 'Tiempo'),
-      (path: '/academy',   icon: Icons.school_outlined,       selIcon: Icons.school,            label: 'Academia'),
+      (path: '/home',      icon: Icons.home_outlined,        selIcon: Icons.home,          label: 'Inicio'),
+      (path: '/spots',     icon: Icons.location_on_outlined, selIcon: Icons.location_on,   label: 'Spots'),
+      (path: '/track',     icon: Icons.surfing,              selIcon: Icons.surfing,        label: 'Remar'),
+      (path: '/prevision', icon: Icons.wb_cloudy_outlined,   selIcon: Icons.wb_cloudy,      label: 'Tiempo'),
+      (path: '/salidas',   icon: Icons.group_outlined,       selIcon: Icons.group,          label: 'Salidas'),
     ];
     final idx = tabs.indexWhere((t) => t.path == location).clamp(0, tabs.length - 1);
     return Scaffold(
