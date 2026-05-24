@@ -7,47 +7,43 @@ Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
 Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-lib/data/datasources/remote/prevision_service.dart:3:8: Error: Error when reading 'lib/data/datasources/models/prevision_model.dart': No such file or directory
-import '../models/prevision_model.dart';
-       ^
-lib/data/datasources/remote/prevision_service.dart:16:26: Error: Type 'PrevisionHoraria' not found.
-  final Map<String, List<PrevisionHoraria>> _cacheHorario = {};
-                         ^^^^^^^^^^^^^^^^
-lib/data/datasources/remote/prevision_service.dart:17:21: Error: Type 'DatosSolares' not found.
-  final Map<String, DatosSolares> _cacheSolar = {};
-                    ^^^^^^^^^^^^
-lib/data/datasources/remote/prevision_service.dart:20:15: Error: Type 'PrevisionHoraria' not found.
-  Future<List<PrevisionHoraria>> obtenerPrevisionHoraria({
-              ^^^^^^^^^^^^^^^^
-lib/data/datasources/remote/prevision_service.dart:52:10: Error: Type 'DatosSolares' not found.
-  Future<DatosSolares?> obtenerDatosSolares({
-         ^^^^^^^^^^^^
-lib/data/datasources/remote/prevision_service.dart:108:8: Error: Type 'PrevisionHoraria' not found.
-  List<PrevisionHoraria> _parsear(
-       ^^^^^^^^^^^^^^^^
-lib/data/datasources/remote/prevision_service.dart:16:26: Error: 'PrevisionHoraria' isn't a type.
-  final Map<String, List<PrevisionHoraria>> _cacheHorario = {};
-                         ^^^^^^^^^^^^^^^^
-lib/data/datasources/remote/prevision_service.dart:17:21: Error: 'DatosSolares' isn't a type.
-  final Map<String, DatosSolares> _cacheSolar = {};
-                    ^^^^^^^^^^^^
-lib/data/datasources/remote/prevision_service.dart:17:49: Error: A value of type 'Map<dynamic, dynamic>' can't be assigned to a variable of type 'Map<String, invalid-type>'.
- - 'Map' is from 'dart:core'.
-  final Map<String, DatosSolares> _cacheSolar = {};
-                                                ^
-lib/data/datasources/remote/prevision_service.dart:74:21: Error: The method 'DatosSolares' isn't defined for the class 'PrevisionService'.
- - 'PrevisionService' is from 'package:supready/data/datasources/remote/prevision_service.dart' ('lib/data/datasources/remote/prevision_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'DatosSolares'.
-      final solar = DatosSolares(
-                    ^^^^^^^^^^^^
-lib/data/datasources/remote/prevision_service.dart:127:20: Error: 'PrevisionHoraria' isn't a type.
-    final horas = <PrevisionHoraria>[];
-                   ^^^^^^^^^^^^^^^^
-lib/data/datasources/remote/prevision_service.dart:135:17: Error: The method 'PrevisionHoraria' isn't defined for the class 'PrevisionService'.
- - 'PrevisionService' is from 'package:supready/data/datasources/remote/prevision_service.dart' ('lib/data/datasources/remote/prevision_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'PrevisionHoraria'.
-      horas.add(PrevisionHoraria(
-                ^^^^^^^^^^^^^^^^
+lib/presentation/screens/salidas/salidas_screen.dart:39:46: Error: The method 'getSalidas' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'getSalidas'.
+    final todas = await SupDatabase.instance.getSalidas();
+                                             ^^^^^^^^^^
+lib/data/datasources/local/sup_database.dart:157:22: Error: Undefined name 'database'.
+    final db = await database;
+                     ^^^^^^^^
+lib/data/datasources/local/sup_database.dart:163:22: Error: Undefined name 'database'.
+    final db = await database;
+                     ^^^^^^^^
+lib/data/datasources/local/sup_database.dart:185:22: Error: Undefined name 'database'.
+    final db = await database;
+                     ^^^^^^^^
+lib/data/datasources/local/sup_database.dart:194:22: Error: Undefined name 'database'.
+    final db = await database;
+                     ^^^^^^^^
+lib/presentation/screens/salidas/crear_salida_screen.dart:71:32: Error: The method 'crearSalida' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'crearSalida'.
+    await SupDatabase.instance.crearSalida(salida);
+                               ^^^^^^^^^^^
+lib/presentation/screens/salidas/detalle_salida_screen.dart:48:32: Error: The method 'anotarseEnSalida' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'anotarseEnSalida'.
+    await SupDatabase.instance.anotarseEnSalida(
+                               ^^^^^^^^^^^^^^^^
+lib/presentation/screens/salidas/detalle_salida_screen.dart:55:48: Error: The method 'getSalidas' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'getSalidas'.
+    final salidas = await SupDatabase.instance.getSalidas();
+                                               ^^^^^^^^^^
+lib/presentation/screens/salidas/detalle_salida_screen.dart:81:32: Error: The method 'cancelarSalida' isn't defined for the class 'SupDatabase'.
+ - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'cancelarSalida'.
+    await SupDatabase.instance.cancelarSalida(int.parse(_salida.salidaId ?? '0'));
+                               ^^^^^^^^^^^^^^
 Target kernel_snapshot failed: Exception
 
 
@@ -63,6 +59,6 @@ Execution failed for task ':app:compileFlutterBuildDebug'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 26s
-Running Gradle task 'assembleDebug'...                            147.1s
+BUILD FAILED in 2m 13s
+Running Gradle task 'assembleDebug'...                            134.4s
 Gradle task assembleDebug failed with exit code 1
