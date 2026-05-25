@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -24,10 +25,21 @@ jobs:
           channel: 'stable'
           cache: true
 
+      # Restaurar keystore estable desde secret
+      - name: Restore keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/supready-debug.jks
+          echo "Keystore restored: $(ls -lh android/app/supready-debug.jks)"
+
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build debug APK
+      - name: Build APK (debug con firma estable)
+        env:
+          KEYSTORE_PATH: supready-debug.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           set +e
           flutter build apk --debug --no-tree-shake-icons > build_output.txt 2>&1

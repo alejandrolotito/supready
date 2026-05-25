@@ -21,3 +21,4 @@ ios/.symlinks/
 # Misc
 .DS_Store
 *.log
+android/app/supready-debug.jks
