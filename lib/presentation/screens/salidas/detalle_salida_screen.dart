@@ -46,7 +46,7 @@ class _DetalleSalidaScreenState extends State<DetalleSalidaScreen> {
     }
     setState(() => _procesando = true);
     await SupDatabase.instance.anotarseEnSalida(
-      int.parse(_salida.salidaId ?? '0'),
+      _salida.salidaId ?? 0,
       ParticipanteSalida(
         usuarioId: usuario.usuarioId ?? 0,
         nombre: usuario.nombre,
@@ -78,7 +78,7 @@ class _DetalleSalidaScreenState extends State<DetalleSalidaScreen> {
       ),
     );
     if (confirmar != true) return;
-    await SupDatabase.instance.cancelarSalida(int.parse(_salida.salidaId ?? '0'));
+    await SupDatabase.instance.cancelarSalida(_salida.salidaId ?? 0);
     if (mounted) Navigator.pop(context);
   }
 

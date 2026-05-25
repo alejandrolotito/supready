@@ -188,7 +188,7 @@ enum EstadoSalida { abierta, enCurso, finalizada, cancelada }
 enum EstadoParticipante { confirmado, enEspera, remando, finalizado }
 
 class SalidaGrupal {
-  final String? salidaId;
+  final int? salidaId;
   final int organizadorId;
   final int spotId;
   final String spotNombre;
@@ -232,7 +232,7 @@ class SalidaGrupal {
   };
 
   factory SalidaGrupal.fromMap(Map<String, dynamic> m) => SalidaGrupal(
-    salidaId: m['salida_id']?.toString(),
+    salidaId: m['salida_id'] as int?,
     organizadorId: m['organizador_id'] as int,
     spotId: m['spot_id'] as int,
     spotNombre: m['spot_nombre'] as String? ?? '',
