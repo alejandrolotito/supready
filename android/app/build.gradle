@@ -6,8 +6,8 @@ plugins {
 
 android {
     namespace "com.supready.app"
-    compileSdk 35
-    ndkVersion "27.0.12077973"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -29,15 +29,14 @@ android {
 
     defaultConfig {
         applicationId "com.supready.app"
-        minSdk 21
-        targetSdk 35
-        versionCode flutter.versionCode
-        versionName flutter.versionName
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode 1
+        versionName "3.5.0"
     }
 
     buildTypes {
         debug {
-            // Usa el mismo signingConfig que release para firma consistente
             signingConfig signingConfigs.release
         }
         release {
