@@ -1,64 +1,40 @@
 
 Running Gradle task 'assembleDebug'...                          
-Checking the license for package Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/licenses
-License for package Android SDK Build-Tools 33.0.1 accepted.
-Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
-"Install Android SDK Build-Tools 33.0.1 v.33.0.1" ready.
-Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
-"Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
-"Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-lib/presentation/screens/salidas/salidas_screen.dart:39:46: Error: The method 'getSalidas' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'getSalidas'.
-    final todas = await SupDatabase.instance.getSalidas();
-                                             ^^^^^^^^^^
-lib/data/datasources/local/sup_database.dart:157:22: Error: Undefined name 'database'.
-    final db = await database;
-                     ^^^^^^^^
-lib/data/datasources/local/sup_database.dart:163:22: Error: Undefined name 'database'.
-    final db = await database;
-                     ^^^^^^^^
-lib/data/datasources/local/sup_database.dart:185:22: Error: Undefined name 'database'.
-    final db = await database;
-                     ^^^^^^^^
-lib/data/datasources/local/sup_database.dart:194:22: Error: Undefined name 'database'.
-    final db = await database;
-                     ^^^^^^^^
-lib/presentation/screens/salidas/crear_salida_screen.dart:71:32: Error: The method 'crearSalida' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'crearSalida'.
-    await SupDatabase.instance.crearSalida(salida);
-                               ^^^^^^^^^^^
-lib/presentation/screens/salidas/detalle_salida_screen.dart:48:32: Error: The method 'anotarseEnSalida' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'anotarseEnSalida'.
-    await SupDatabase.instance.anotarseEnSalida(
-                               ^^^^^^^^^^^^^^^^
-lib/presentation/screens/salidas/detalle_salida_screen.dart:55:48: Error: The method 'getSalidas' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'getSalidas'.
-    final salidas = await SupDatabase.instance.getSalidas();
-                                               ^^^^^^^^^^
-lib/presentation/screens/salidas/detalle_salida_screen.dart:81:32: Error: The method 'cancelarSalida' isn't defined for the class 'SupDatabase'.
- - 'SupDatabase' is from 'package:supready/data/datasources/local/sup_database.dart' ('lib/data/datasources/local/sup_database.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'cancelarSalida'.
-    await SupDatabase.instance.cancelarSalida(int.parse(_salida.salidaId ?? '0'));
-                               ^^^^^^^^^^^^^^
-Target kernel_snapshot failed: Exception
 
+FAILURE: Build completed with 2 failures.
 
-FAILURE: Build failed with an exception.
+1: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/runner/work/supready/supready/android/app/build.gradle' line: 34
 
 * What went wrong:
-Execution failed for task ':app:compileFlutterBuildDebug'.
-> Process 'command '/opt/hostedtoolcache/flutter/stable-3.22.3-x64/flutter/bin/flutter'' finished with non-zero exit value 1
+A problem occurred evaluating project ':app'.
+> Could not get unknown property 'versionCode' for extension 'flutter' of type FlutterExtension.
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
+==============================================================================
 
-BUILD FAILED in 2m 13s
-Running Gradle task 'assembleDebug'...                            134.4s
+2: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/runner/work/supready/supready/android/app/build.gradle' line: 34
+
+* What went wrong:
+A problem occurred evaluating project ':app'.
+> Could not get unknown property 'versionCode' for extension 'flutter' of type FlutterExtension.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 1m 18s
+Running Gradle task 'assembleDebug'...                             79.4s
 Gradle task assembleDebug failed with exit code 1
