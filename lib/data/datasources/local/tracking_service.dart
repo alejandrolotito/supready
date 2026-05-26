@@ -154,21 +154,15 @@ class TrackingService with WidgetsBindingObserver {
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'supready_tracking',
         channelName: 'SUPReady — Remada activa',
-        channelDescription:
-            'Notificación mientras la remada está en curso.',
+        channelDescription: 'Notificación mientras la remada está en curso.',
         channelImportance: NotificationChannelImportance.LOW,
         priority: NotificationPriority.LOW,
-        iconData: const NotificationIconData(
-          resType: ResourceType.mipmap,
-          resPrefix: ResourcePrefix.ic,
-          name: 'launcher',
-        ),
       ),
       iosNotificationOptions: const IOSNotificationOptions(
         showNotification: true,
         playSound: false,
       ),
-      foregroundTaskOptions: const ForegroundTaskOptions(
+      foregroundTaskOptions: ForegroundTaskOptions(
         eventAction: ForegroundTaskEventAction.repeat(5000),
         autoRunOnBoot: false,
         autoRunOnMyPackageReplaced: false,
