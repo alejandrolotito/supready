@@ -1,40 +1,110 @@
 
 Running Gradle task 'assembleDebug'...                          
+Checking the license for package Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/licenses
+License for package Android SDK Build-Tools 33.0.1 accepted.
+Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" ready.
+Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
+lib/presentation/screens/historial/historial_screen.dart:186:29: Error: Can't find ']' to match '['.
+      body: Stack(children: [
+                            ^
+lib/presentation/screens/historial/historial_screen.dart:178:20: Error: Can't find ')' to match '('.
+    return Scaffold(
+                   ^
+lib/presentation/screens/historial/historial_screen.dart:255:1: Error: Expected a declaration, but got '}'.
+}
+^
+lib/presentation/screens/historial/historial_screen.dart:111:7: Error: The non-abstract class '_DetalleRutaScreenState' is missing implementations for these members:
+ - State.build
+Try to either
+ - provide an implementation,
+ - inherit an implementation from a superclass or mixin,
+ - mark the class as abstract, or
+ - provide a 'noSuchMethod' implementation.
 
-FAILURE: Build completed with 2 failures.
+class _DetalleRutaScreenState extends State<_DetalleRutaScreen> {
+      ^^^^^^^^^^^^^^^^^^^^^^^
+/opt/hostedtoolcache/flutter/stable-3.22.3-x64/flutter/packages/flutter/lib/src/widgets/framework.dart:1467:10: Context: 'State.build' is defined here.
+  Widget build(BuildContext context);
+         ^^^^^
+lib/presentation/screens/home/home_screen.dart:129:72: Error: Expected an identifier, but got ','.
+Try inserting an identifier before ','.
+                child: Icon(Icons.person, color: SupColors.cyanNeon))),,
+                                                                       ^
+lib/presentation/screens/historial/historial_screen.dart:173:18: Error: Undefined name 'widget'.
+    final ruta = widget.ruta;
+                 ^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:174:20: Error: Undefined name '_coords'.
+    final center = _coords.isNotEmpty
+                   ^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:175:26: Error: Undefined name '_coords'.
+        ? LatLng(_coords[_coords.length ~/ 2].latitud, _coords[_coords.length ~/ 2].longitud)
+                         ^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:175:18: Error: Undefined name '_coords'.
+        ? LatLng(_coords[_coords.length ~/ 2].latitud, _coords[_coords.length ~/ 2].longitud)
+                 ^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:175:64: Error: Undefined name '_coords'.
+        ? LatLng(_coords[_coords.length ~/ 2].latitud, _coords[_coords.length ~/ 2].longitud)
+                                                               ^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:175:56: Error: Undefined name '_coords'.
+        ? LatLng(_coords[_coords.length ~/ 2].latitud, _coords[_coords.length ~/ 2].longitud)
+                                                       ^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:183:100: Error: Undefined name '_compartir'.
+          IconButton(icon: const Icon(Icons.share_outlined, color: SupColors.cyanNeon), onPressed: _compartir),
+                                                                                          ^^^^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:188:15: Error: Undefined name '_mostrandoCard'.
+          if (_mostrandoCard)
+              ^^^^^^^^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:190:48: Error: Undefined name '_shareKey'.
+              child: RutaShareCard(repaintKey: _shareKey, ruta: widget.ruta)),
+                                               ^^^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:190:65: Error: Undefined name 'widget'.
+              child: RutaShareCard(repaintKey: _shareKey, ruta: widget.ruta)),
+                                                                ^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:191:11: Error: Undefined name '_cargando'.
+          _cargando
+          ^^^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:200:23: Error: Undefined name '_coords'.
+                  if (_coords.length >= 2) PolylineLayer(polylines: _buildPolylines()),
+                      ^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:200:69: Error: Method not found: '_buildPolylines'.
+                  if (_coords.length >= 2) PolylineLayer(polylines: _buildPolylines()),
+                                                                    ^^^^^^^^^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:201:23: Error: Undefined name '_coords'.
+                  if (_coords.isNotEmpty) MarkerLayer(markers: [
+                      ^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:202:29: Error: Undefined name '_coords'.
+                    _marker(_coords.first, SupColors.semaforoVerde, Icons.play_arrow),
+                            ^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:203:29: Error: Undefined name '_coords'.
+                    _marker(_coords.last,  SupColors.semaforoRojo,  Icons.stop),
+                            ^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:220:27: Error: Undefined name '_velMin'.
+                  Text('${_velMin.toStringAsFixed(1)}–${_velMax.toStringAsFixed(1)} km/h',
+                          ^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:220:57: Error: Undefined name '_velMax'.
+                  Text('${_velMin.toStringAsFixed(1)}–${_velMax.toStringAsFixed(1)} km/h',
+                                                        ^^^^^^^
+lib/presentation/screens/historial/historial_screen.dart:230:40: Error: Undefined name '_coords'.
+                _stat('Puntos GPS', '${_coords.length}'),
+                                       ^^^^^^^
+Target kernel_snapshot failed: Exception
 
-1: Task failed with an exception.
------------
-* Where:
-Build file '/home/runner/work/supready/supready/android/app/build.gradle' line: 34
+
+FAILURE: Build failed with an exception.
 
 * What went wrong:
-A problem occurred evaluating project ':app'.
-> Could not get unknown property 'versionCode' for extension 'flutter' of type FlutterExtension.
+Execution failed for task ':app:compileFlutterBuildDebug'.
+> Process 'command '/opt/hostedtoolcache/flutter/stable-3.22.3-x64/flutter/bin/flutter'' finished with non-zero exit value 1
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
-==============================================================================
 
-2: Task failed with an exception.
------------
-* Where:
-Build file '/home/runner/work/supready/supready/android/app/build.gradle' line: 34
-
-* What went wrong:
-A problem occurred evaluating project ':app'.
-> Could not get unknown property 'versionCode' for extension 'flutter' of type FlutterExtension.
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-==============================================================================
-
-BUILD FAILED in 1m 18s
-Running Gradle task 'assembleDebug'...                             79.4s
+BUILD FAILED in 2m 25s
+Running Gradle task 'assembleDebug'...                            146.4s
 Gradle task assembleDebug failed with exit code 1
