@@ -25,17 +25,17 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # Restaurar keystore estable desde secret
       - name: Restore keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/supready-debug.jks
-          echo "Keystore restored: $(ls -lh android/app/supready-debug.jks)"
+          echo "Keystore: $(ls -lh android/app/supready-debug.jks)"
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build APK (debug con firma estable)
+      - name: Build APK
         env:
+          BUILD_NUMBER: ${{ github.run_number }}
           KEYSTORE_PATH: supready-debug.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -60,6 +60,6 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: supready-debug-apk
+          name: supready-v3.6-build${{ github.run_number }}
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30

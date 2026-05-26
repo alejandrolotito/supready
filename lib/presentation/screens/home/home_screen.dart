@@ -6,6 +6,7 @@ import '../../../data/models/models.dart';
 import '../../../data/datasources/remote/clima_service.dart';
 import '../../../data/datasources/local/sup_database.dart';
 import '../../../data/datasources/remote/auth_service.dart';
+import '../../../data/repositories/stats_repository.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   CondicionesClimaticasModel? _condiciones;
   List<RutaTrazadaModel> _rutasRecientes = [];
   bool _cargandoClima = true, _cargandoRutas = true;
+  EstadisticasUsuario? _stats;
 
   @override
   void initState() {
@@ -75,7 +77,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final rutas = usuario?.usuarioId != null
         ? await SupDatabase.instance.getRutasPorUsuario(usuario!.usuarioId!)
         : await SupDatabase.instance.getAllRutas();
-    if (mounted) setState(() { _rutasRecientes = rutas.take(3).toList(); _cargandoRutas = false; });
+    final stats = await StatsRepository.instance.calcular(usuario?.usuarioId);
+    if (mounted) setState(() { _rutasRecientes = rutas.take(3).toList(); _stats = stats; _cargandoRutas = false; });
   }
 
   void _onCambiarSpot(SpotModel? spot) {
@@ -323,20 +326,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ─── Stats ───────────────────────────────────────────────
-  Widget _buildStats() => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: SupColors.surface,
-        borderRadius: BorderRadius.circular(16), border: Border.all(color: SupColors.divider)),
-    child: Row(children: [
-      _statItem('Total km', _rutasRecientes.isEmpty ? '—'
-          : '${_rutasRecientes.fold(0.0, (s, r) => s + r.distanciaKm).toStringAsFixed(1)} km'),
-      Container(width: 1, height: 40, color: SupColors.divider),
-      _statItem('Sesiones', '${_rutasRecientes.length}'),
-      Container(width: 1, height: 40, color: SupColors.divider),
-      _statItem('Vel. media', _rutasRecientes.isEmpty ? '—'
-          : '${(_rutasRecientes.fold(0.0, (s, r) => s + r.velocidadMedia) / _rutasRecientes.length).toStringAsFixed(1)} km/h'),
-    ]),
-  );
+  Widget _buildStats() {
+    final s = _stats;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: SupColors.surface,
+          borderRadius: BorderRadius.circular(16), border: Border.all(color: SupColors.divider)),
+      child: Row(children: [
+        _statItem('Total km', s == null ? '—' : s.totalKmStr),
+        Container(width: 1, height: 40, color: SupColors.divider),
+        _statItem('Sesiones', s == null ? '—' : '${s.totalRutas}'),
+        Container(width: 1, height: 40, color: SupColors.divider),
+        _statItem('Vel. media', s == null ? '—' : s.velMediaStr),
+      ]),
+    );
+  }
 
   Widget _statItem(String label, String valor) => Expanded(child: Column(children: [
     Text(valor, style: const TextStyle(color: SupColors.textPrimary,

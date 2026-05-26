@@ -31,8 +31,9 @@ android {
         applicationId "com.supready.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode 1
-        versionName "3.5.0"
+        // versionCode auto-increment con el número de build de CI
+        versionCode = (System.getenv("BUILD_NUMBER") ?: "1").toInteger()
+        versionName "3.6.0"
     }
 
     buildTypes {
