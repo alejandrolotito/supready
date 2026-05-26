@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../widgets/common/ruta_share_card.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/models.dart';
 import '../../../data/datasources/local/sup_database.dart';
@@ -111,6 +112,8 @@ class _DetalleRutaScreenState extends State<_DetalleRutaScreen> {
   List<CoordenadasRutaModel> _coords = [];
   bool _cargando = true;
   double _velMax = 0, _velMin = double.infinity;
+  bool _mostrandoCard = false;
+  final _shareKey = GlobalKey();
 
   @override
   void initState() { super.initState(); _cargar(); }
@@ -156,13 +159,13 @@ class _DetalleRutaScreenState extends State<_DetalleRutaScreen> {
   }
 
   Future<void> _compartir() async {
-    final r = widget.ruta;
-    await Share.share(
-      '🏄 Remé ${r.distanciaKm.toStringAsFixed(2)} km en ${r.duracionMinutos} min\n'
-      'Vel. media: ${r.velocidadMedia.toStringAsFixed(1)} km/h · Máx: ${r.velocidadMaxima.toStringAsFixed(1)} km/h\n'
-      '#SUPReady',
-      subject: 'Mi remada SUPReady',
-    );
+    setState(() => _mostrandoCard = true);
+    await Future.delayed(const Duration(milliseconds: 300));
+    await compartirRutaComoImagen(_shareKey, widget.ruta);
+    if (mounted) setState(() => _mostrandoCard = false);
+  }
+
+  
   }
 
   @override
@@ -180,7 +183,12 @@ class _DetalleRutaScreenState extends State<_DetalleRutaScreen> {
           IconButton(icon: const Icon(Icons.share_outlined, color: SupColors.cyanNeon), onPressed: _compartir),
         ],
       ),
-      body: _cargando
+      body: Stack(children: [
+          // Card invisible para captura (fuera de pantalla)
+          if (_mostrandoCard)
+            Positioned(left: -9999, top: -9999,
+              child: RutaShareCard(repaintKey: _shareKey, ruta: widget.ruta)),
+          _cargando
           ? const Center(child: CircularProgressIndicator(color: SupColors.cyanNeon))
           : Column(children: [
               // Mapa

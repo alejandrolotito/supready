@@ -63,6 +63,7 @@ GoRouter _buildRouter(String initialLocation) => GoRouter(
     GoRoute(path: '/historial', builder: (_, __) => const HistorialScreen()),
     GoRoute(path: '/profile',   builder: (_, __) => const ProfileScreen()),
     GoRoute(path: '/academy',   builder: (_, __) => const AcademyScreen()),
+    GoRoute(path: '/chat',      builder: (context, state) => const SalidasScreen()),
   ],
 );
 

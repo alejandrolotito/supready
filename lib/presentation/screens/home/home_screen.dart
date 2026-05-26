@@ -121,10 +121,12 @@ class _HomeScreenState extends State<HomeScreen> {
         Text(usuario?.nombre ?? 'Palista', style: SupTextStyles.heading1),
       ]),
       const Spacer(),
-      usuario?.avatarUrl != null
-          ? CircleAvatar(radius: 22, backgroundImage: NetworkImage(usuario!.avatarUrl!))
-          : const CircleAvatar(radius: 22, backgroundColor: SupColors.surface,
-              child: Icon(Icons.person, color: SupColors.cyanNeon)),
+      GestureDetector(
+        onTap: () => context.go('/profile'),
+        child: usuario?.avatarUrl != null
+            ? CircleAvatar(radius: 22, backgroundImage: NetworkImage(usuario!.avatarUrl!))
+            : const CircleAvatar(radius: 22, backgroundColor: SupColors.surface,
+                child: Icon(Icons.person, color: SupColors.cyanNeon))),,
     ]);
   }
 

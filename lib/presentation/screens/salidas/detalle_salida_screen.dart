@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../data/models/models.dart';
 import '../../../data/datasources/local/sup_database.dart';
 import '../../../data/datasources/remote/auth_service.dart';
+import 'chat_salida_screen.dart';
 
 // ============================================================
 // SUPReady - Detalle de Salida Grupal
@@ -106,6 +107,10 @@ class _DetalleSalidaScreenState extends State<DetalleSalidaScreen> {
       appBar: AppBar(
         title: const Text('Detalle de salida'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline, color: SupColors.cyanNeon),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => ChatSalidaScreen(salida: _salida)))),
           IconButton(icon: const Icon(Icons.share_outlined, color: SupColors.cyanNeon),
               onPressed: _compartir),
           if (_soyCreadador)
