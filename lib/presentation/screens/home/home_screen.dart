@@ -126,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: usuario?.avatarUrl != null
             ? CircleAvatar(radius: 22, backgroundImage: NetworkImage(usuario!.avatarUrl!))
             : const CircleAvatar(radius: 22, backgroundColor: SupColors.surface,
-                child: Icon(Icons.person, color: SupColors.cyanNeon)))),
+                child: Icon(Icons.person, color: SupColors.cyanNeon))),
     ]);
   }
 
