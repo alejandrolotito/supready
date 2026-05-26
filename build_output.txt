@@ -7,9 +7,25 @@ Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
 Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-lib/presentation/screens/home/home_screen.dart:129:71: Error: Expected ']' before this.
-                child: Icon(Icons.person, color: SupColors.cyanNeon)))),
-                                                                      ^
+lib/data/datasources/local/tracking_service.dart:162:20: Error: Undefined name 'ResourceType'.
+          resType: ResourceType.mipmap,
+                   ^^^^^^^^^^^^
+lib/data/datasources/local/tracking_service.dart:163:22: Error: Undefined name 'ResourcePrefix'.
+          resPrefix: ResourcePrefix.ic,
+                     ^^^^^^^^^^^^^^
+lib/data/datasources/local/tracking_service.dart:161:25: Error: Couldn't find constructor 'NotificationIconData'.
+        iconData: const NotificationIconData(
+                        ^^^^^^^^^^^^^^^^^^^^
+lib/data/datasources/local/tracking_service.dart:161:9: Error: No named parameter with the name 'iconData'.
+        iconData: const NotificationIconData(
+        ^^^^^^^^
+../../../.pub-cache/hosted/pub.dev/flutter_foreground_task-8.17.0/lib/models/notification_options.dart:8:3: Context: Found this candidate, but the arguments don't match.
+  AndroidNotificationOptions({
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/data/datasources/local/tracking_service.dart:172:48: Error: Cannot invoke a non-'const' factory where a const expression is expected.
+Try using a constructor or factory that is 'const'.
+        eventAction: ForegroundTaskEventAction.repeat(5000),
+                                               ^^^^^^
 Target kernel_snapshot failed: Exception
 
 
@@ -25,6 +41,6 @@ Execution failed for task ':app:compileFlutterBuildDebug'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 26s
-Running Gradle task 'assembleDebug'...                            146.8s
+BUILD FAILED in 2m 39s
+Running Gradle task 'assembleDebug'...                            160.3s
 Gradle task assembleDebug failed with exit code 1
