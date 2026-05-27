@@ -113,3 +113,30 @@ ROJO  → Viento > 15kts OR Ráfagas > 18kts OR Offshore OR Olas > 1m
 4. **flutter_bloc** para gestión de estado en Spots y Tracking
 5. **Push Notifications** para alertas de Prefectura (RF1.3 geocercas)
 6. **Subir a Play Store** (track de producción)
+
+## Configuración Firebase (proyecto: supready)
+
+**Datos del proyecto:**
+- Nombre: SupReady
+- ID: supready  
+- Número: 82783760497
+- Package Android: com.supready.app
+
+**Para activar Google Sign-In:**
+
+1. Ir a [Firebase Console](https://console.firebase.google.com/project/supready)
+2. Authentication → Sign-in method → Google → Habilitar
+3. Obtener SHA-1 del keystore:
+```bash
+keytool -list -v \
+  -keystore android/app/supready-debug.jks \
+  -alias supready \
+  -storepass supready2024 \
+  -keypass supready2024
+```
+4. En Firebase Console → Configuración del proyecto → Agregar huella digital SHA-1
+5. Descargar `google-services.json` actualizado → reemplazar `android/app/google-services.json`
+6. Subir al repo: `git add android/app/google-services.json && git commit && git push`
+
+> El `google-services.json` actual es un placeholder. Google Sign-In funcionará
+> cuando se complete el paso 4 y 5 con el SHA-1 real del keystore.

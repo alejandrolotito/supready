@@ -2,6 +2,7 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
 }
 
 android {
@@ -31,9 +32,8 @@ android {
         applicationId "com.supready.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        // versionCode auto-increment con el número de build de CI
         versionCode = (System.getenv("BUILD_NUMBER") ?: "1").toInteger()
-        versionName "3.6.0"
+        versionName "3.8.0"
     }
 
     buildTypes {
