@@ -1,4 +1,4 @@
-package com.sup.ready.go
+package com.supready.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:82783760497:android:29a5b512c76075e61b6bd0",
+        "mobilesdk_app_id": "1:82783760497:android:c0f751d39163f3a81b6bd0",
         "android_client_info": {
-          "package_name": "Com.sup.ready.go"
+          "package_name": "com.supready.app"
         }
       },
       "oauth_client": [],
