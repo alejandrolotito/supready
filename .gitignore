@@ -21,3 +21,4 @@ ios/.symlinks/
 .DS_Store
 *.log
 android/app/supready-debug.jks
+*adminsdk*.json

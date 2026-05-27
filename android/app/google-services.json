@@ -2,25 +2,20 @@
   "project_info": {
     "project_number": "82783760497",
     "project_id": "supready",
-    "storage_bucket": "supready.appspot.com"
+    "storage_bucket": "supready.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:82783760497:android:supready001",
+        "mobilesdk_app_id": "1:82783760497:android:29a5b512c76075e61b6bd0",
         "android_client_info": {
-          "package_name": "com.supready.app"
+          "package_name": "Com.sup.ready.go"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "82783760497-supready.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "PLACEHOLDER_REPLACE_WITH_REAL_KEY"
+          "current_key": "AIzaSyD5_CuMEnn6M2o-W-y3_S-HQYeIIT6y-i4"
         }
       ],
       "services": {

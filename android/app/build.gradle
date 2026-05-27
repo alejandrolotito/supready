@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace "com.supready.app"
+    namespace "com.sup.ready.go"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -29,7 +29,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.supready.app"
+        applicationId "com.sup.ready.go"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = (System.getenv("BUILD_NUMBER") ?: "1").toInteger()
