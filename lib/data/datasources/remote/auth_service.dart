@@ -4,11 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/models.dart';
 import '../local/sup_database.dart';
 
-// ============================================================
-// SUPReady - Servicio de Autenticación con Firebase Auth
-// Proyecto: SupReady (supready) — Número: 82783760497
-// ============================================================
-
 class AuthService {
   static final AuthService instance = AuthService._();
   AuthService._();
@@ -19,6 +14,48 @@ class AuthService {
   UsuarioModel? _usuarioActual;
   UsuarioModel? get usuarioActual => _usuarioActual;
   bool get estaAutenticado => _usuarioActual != null;
+
+  // ─── Restaurar sesión al iniciar la app ─────────────────
+  // Firebase Auth persiste la sesión automáticamente entre reinicios.
+  // Solo necesitamos cargar el UsuarioModel local.
+  Future<bool> restaurarSesion() async {
+    try {
+      // 1. Firebase ya tiene la sesión activa (token persistido)
+      final firebaseUser = _firebaseAuth.currentUser;
+      if (firebaseUser?.email != null) {
+        // Refrescar token silenciosamente (no muestra pantalla)
+        await firebaseUser!.reload();
+        _usuarioActual = await SupDatabase.instance
+            .getUsuarioByEmail(firebaseUser.email!);
+        if (_usuarioActual != null) {
+          return true;
+        }
+        // Usuario en Firebase pero no en SQLite local → reconstruir
+        final partes = (firebaseUser.displayName ?? 'Usuario').split(' ');
+        final usuario = UsuarioModel(
+          nombre: partes.first,
+          apellido: partes.length > 1 ? partes.sublist(1).join(' ') : '',
+          email: firebaseUser.email!,
+          googleId: firebaseUser.uid,
+          avatarUrl: firebaseUser.photoURL,
+        );
+        await SupDatabase.instance.upsertUsuario(usuario);
+        _usuarioActual = await SupDatabase.instance
+            .getUsuarioByEmail(firebaseUser.email!);
+        return _usuarioActual != null;
+      }
+
+      // 2. Fallback: modo invitado guardado en SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString('last_email');
+      if (email != null) {
+        _usuarioActual =
+            await SupDatabase.instance.getUsuarioByEmail(email);
+        return _usuarioActual != null;
+      }
+    } catch (_) {}
+    return false;
+  }
 
   // ─── Sign In con Google + Firebase ──────────────────────
   Future<AuthResult> signInConGoogle() async {
@@ -32,26 +69,27 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      final userCredential =
+      final userCred =
           await _firebaseAuth.signInWithCredential(credential);
-      final firebaseUser = userCredential.user;
-      if (firebaseUser == null) return AuthResult.error('Firebase user null');
+      final firebaseUser = userCred.user;
+      if (firebaseUser == null) return AuthResult.error('Usuario nulo');
 
-      final partes = (firebaseUser.displayName ?? 'Usuario').split(' ');
-      final nombre   = partes.isNotEmpty ? partes.first : 'Usuario';
-      final apellido = partes.length > 1 ? partes.sublist(1).join(' ') : '';
-
+      final partes =
+          (firebaseUser.displayName ?? googleUser.displayName ?? 'Usuario')
+              .split(' ');
       final usuario = UsuarioModel(
-        nombre: nombre, apellido: apellido,
+        nombre: partes.first,
+        apellido: partes.length > 1 ? partes.sublist(1).join(' ') : '',
         email: firebaseUser.email ?? googleUser.email,
         googleId: firebaseUser.uid,
-        avatarUrl: firebaseUser.photoURL,
+        avatarUrl: firebaseUser.photoURL ?? googleUser.photoUrl,
       );
 
       await SupDatabase.instance.upsertUsuario(usuario);
       _usuarioActual = await SupDatabase.instance
           .getUsuarioByEmail(usuario.email);
 
+      // Guardar email para fallback
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('last_email', usuario.email);
 
@@ -81,28 +119,7 @@ class AuthService {
     await prefs.setString('last_email', 'invitado@supready.local');
   }
 
-  // ─── Restaurar sesión al abrir ───────────────────────────
-  Future<bool> restaurarSesion() async {
-    try {
-      // Firebase mantiene la sesión automáticamente
-      final firebaseUser = _firebaseAuth.currentUser;
-      if (firebaseUser?.email != null) {
-        _usuarioActual = await SupDatabase.instance
-            .getUsuarioByEmail(firebaseUser!.email!);
-        if (_usuarioActual != null) return true;
-      }
-      // Fallback: invitado desde SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      final email = prefs.getString('last_email');
-      if (email != null) {
-        _usuarioActual =
-            await SupDatabase.instance.getUsuarioByEmail(email);
-        return _usuarioActual != null;
-      }
-    } catch (_) {}
-    return false;
-  }
-
+  // ─── Sign Out ────────────────────────────────────────────
   Future<void> signOut() async {
     try {
       await _firebaseAuth.signOut();

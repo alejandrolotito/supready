@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/tracking_state.dart';
+import 'data/datasources/remote/auth_service.dart';
 import 'presentation/screens/tracking/tracking_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/spots/spots_screen.dart';
@@ -17,11 +19,11 @@ import 'presentation/screens/onboarding/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inicializar Firebase (proyecto: supready, número: 82783760497)
   await Firebase.initializeApp();
 
-  // Estado global de tracking — sobrevive cambios de tab
+  // Restaurar sesión (Firebase Auth persiste automáticamente)
+  await AuthService.instance.restaurarSesion();
+
   TrackingState.instance;
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -34,8 +36,11 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final onboardingDone = prefs.getBool('onboarding_done') ?? false;
 
-  runApp(SupReadyApp(
-      initialRoute: onboardingDone ? '/home' : '/onboarding'));
+  // Si ya tiene sesión activa → home directamente
+  final tieneSession = AuthService.instance.estaAutenticado;
+  final initialRoute = (!onboardingDone && !tieneSession) ? '/onboarding' : '/home';
+
+  runApp(SupReadyApp(initialRoute: initialRoute));
 }
 
 class SupReadyApp extends StatelessWidget {
@@ -54,9 +59,7 @@ class SupReadyApp extends StatelessWidget {
 GoRouter _buildRouter(String initialLocation) => GoRouter(
   initialLocation: initialLocation,
   routes: [
-    GoRoute(
-        path: '/onboarding',
-        builder: (_, __) => const OnboardingScreen()),
+    GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
     ShellRoute(
       builder: (context, state, child) => _MainShell(child: child),
       routes: [
@@ -73,12 +76,6 @@ GoRouter _buildRouter(String initialLocation) => GoRouter(
   ],
 );
 
-// ============================================================
-// Shell con IndexedStack — TODAS las tabs viven en memoria
-// Solución para: "al cambiar de tab se pierde la navegación"
-// IndexedStack mantiene todos los widgets montados aunque
-// no sean visibles → el GPS sigue corriendo en el background
-// ============================================================
 class _MainShell extends StatefulWidget {
   final Widget child;
   const _MainShell({required this.child});
@@ -114,10 +111,7 @@ class _MainShellState extends State<_MainShell> {
           backgroundColor: SupColors.surface,
           indicatorColor: SupColors.cyanNeonDim,
           selectedIndex: _idx,
-          onDestinationSelected: (i) {
-            setState(() => _idx = i);
-            context.go(_tabs[i].path);
-          },
+          onDestinationSelected: (i) => setState(() => _idx = i),
           labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
           destinations: _tabs.map((t) => NavigationDestination(
             icon: Icon(t.icon, color: SupColors.textSecondary),
@@ -125,14 +119,12 @@ class _MainShellState extends State<_MainShell> {
             label: t.label,
           )).toList(),
         ),
-        // Punto rojo pulsante sobre tab "Remar" cuando hay remada activa
         _RecordingDot(tabCount: _tabs.length, activeTabIndex: 2),
       ]),
     );
   }
 }
 
-// Indicador visual de remada activa en el nav
 class _RecordingDot extends StatefulWidget {
   final int tabCount, activeTabIndex;
   const _RecordingDot({required this.tabCount, required this.activeTabIndex});
