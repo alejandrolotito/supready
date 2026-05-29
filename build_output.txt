@@ -6,11 +6,14 @@ FAILURE: Build completed with 2 failures.
 1: Task failed with an exception.
 -----------
 * Where:
-Build file '/home/runner/work/supready/supready/android/build.gradle' line: 27
+Build file '/home/runner/work/supready/supready/android/build.gradle' line: 32
 
 * What went wrong:
 A problem occurred evaluating root project 'android'.
-> Cannot run Project.afterEvaluate(Closure) when the project is already evaluated.
+> It is too late to set compileSdk
+  It has already been read to configure this project.
+  Consider either moving this call to be during evaluation,
+  or using the variant API.
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
@@ -22,11 +25,14 @@ A problem occurred evaluating root project 'android'.
 2: Task failed with an exception.
 -----------
 * Where:
-Build file '/home/runner/work/supready/supready/android/build.gradle' line: 27
+Build file '/home/runner/work/supready/supready/android/build.gradle' line: 32
 
 * What went wrong:
 A problem occurred evaluating root project 'android'.
-> Cannot run Project.afterEvaluate(Closure) when the project is already evaluated.
+> It is too late to set compileSdk
+  It has already been read to configure this project.
+  Consider either moving this call to be during evaluation,
+  or using the variant API.
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
@@ -36,5 +42,5 @@ A problem occurred evaluating root project 'android'.
 ==============================================================================
 
 BUILD FAILED in 1m 21s
-Running Gradle task 'assembleDebug'...                             82.1s
+Running Gradle task 'assembleDebug'...                             82.5s
 Gradle task assembleDebug failed with exit code 1
