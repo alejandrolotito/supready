@@ -13,35 +13,26 @@
         }
       },
       "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyD5_CuMEnn6M2o-W-y3_S-HQYeIIT6y-i4"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
+      "api_key": [{ "current_key": "AIzaSyD5_CuMEnn6M2o-W-y3_S-HQYeIIT6y-i4" }],
+      "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:82783760497:android:c0f751d39163f3a81b6bd0",
-        "android_client_info": {
-          "package_name": "com.supready.app"
-        }
+        "mobilesdk_app_id": "1:82783760497:c0f751d39163f3a81b6bd0",
+        "android_client_info": { "package_name": "com.supready.app" }
       },
-      "oauth_client": [],
-      "api_key": [
+      "oauth_client": [
         {
-          "current_key": "AIzaSyD5_CuMEnn6M2o-W-y3_S-HQYeIIT6y-i4"
+          "client_id": "82783760497-s1oa00o5ciceeithbpu120lcklatjr15.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.supready.app",
+            "certificate_hash": "ec76ca0dcd90b975eda96d265ad3e8c95b93346d"
+          }
         }
       ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
+      "api_key": [{ "current_key": "AIzaSyD5_CuMEnn6M2o-W-y3_S-HQYeIIT6y-i4" }],
+      "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
     }
   ],
   "configuration_version": "1"
