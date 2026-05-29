@@ -243,7 +243,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (esInvitado)
           ElevatedButton.icon(
-            onPressed: _loginGoogle,
+            onPressed: () async {
+              await _loginGoogle();
+              if (mounted) setState(() {});
+            },
             icon: const Icon(Icons.login),
             label: const Text('VINCULAR CON GOOGLE'),
             style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 52)),
@@ -294,6 +297,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('¡Bienvenido ${result.usuario!.nombre}! 🏄'),
         backgroundColor: SupColors.semaforoVerde));
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else {
+        context.go('/home');
+      }
     } else if (result.errorConfig) {
       showDialog(context: context, builder: (_) => AlertDialog(
         backgroundColor: SupColors.surface,
@@ -307,6 +315,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Text('ENTENDIDO', style: TextStyle(color: SupColors.cyanNeon))),
         ],
       ));
+    } else if (result.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Error de autenticación: ${result.error}'),
+        backgroundColor: SupColors.semaforoRojo));
     }
   }
 
@@ -322,6 +334,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await AuthService.instance.entrarComoInvitado(nombre);
     await _cargarStats();
     setState(() => _cargando = false);
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else {
+        context.go('/home');
+      }
+    }
   }
 }
