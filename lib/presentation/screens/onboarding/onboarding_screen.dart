@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/datasources/local/sup_database.dart';
+import '../../../data/datasources/remote/auth_service.dart';
 import '../../../data/models/models.dart';
 
 // ============================================================
@@ -35,8 +36,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _finalizar() async {
-    // Guardar nombre como usuario invitado
-    if (_nombre.isNotEmpty) {
+    // Guardar nombre como usuario invitado si no tiene cuenta de Google
+    final usuarioAct = AuthService.instance.usuarioActual;
+    if (usuarioAct == null && _nombre.isNotEmpty) {
       final db = SupDatabase.instance;
       await db.upsertUsuario(UsuarioModel(
         nombre: _nombre, apellido: '', email: 'invitado@supready.local',
@@ -50,7 +52,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_done', true);
     if (mounted) context.go('/home');
-    // Rebuild home to reflect logged-in user if google login was done
   }
 
   @override
@@ -77,10 +78,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               physics: const NeverScrollableScrollPhysics(),
               onPageChanged: (p) => setState(() => _pagina = p),
               children: [
-                _Paso1Bienvenida(onNombre: (n) => setState(() => _nombre = n)),
+                _Paso1Bienvenida(
+                  onNombre: (n) => setState(() => _nombre = n),
+                  onGoogleLoginSuccess: () {
+                    // Pasar directamente al paso de selección de nivel
+                    _pageCtrl.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut);
+                  },
+                ),
                 _Paso2Nivel(nivelActual: _nivel, onNivel: (n) => setState(() => _nivel = n)),
-                _Paso3Spot(spots: _spots, spotActual: _spotFavorito,
-                    onSpot: (s) => setState(() => _spotFavorito = s)),
+                _Paso3Spot(
+                  spots: _spots,
+                  spotActual: _spotFavorito,
+                  onSpot: (s) => setState(() => _spotFavorito = s),
+                  onSpotCreated: _cargarSpots,
+                ),
               ],
             ),
           ),
@@ -124,39 +137,89 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 // ── Paso 1: Nombre ────────────────────────────────────────────
-class _Paso1Bienvenida extends StatelessWidget {
+class _Paso1Bienvenida extends StatefulWidget {
   final ValueChanged<String> onNombre;
-  const _Paso1Bienvenida({required this.onNombre});
+  final VoidCallback onGoogleLoginSuccess;
+  const _Paso1Bienvenida({required this.onNombre, required this.onGoogleLoginSuccess});
+
+  @override
+  State<_Paso1Bienvenida> createState() => _Paso1BienvenidaState();
+}
+
+class _Paso1BienvenidaState extends State<_Paso1Bienvenida> {
+  bool _cargando = false;
+
+  Future<void> _loginGoogle() async {
+    setState(() => _cargando = true);
+    final result = await AuthService.instance.signInConGoogle();
+    setState(() => _cargando = false);
+    if (!mounted) return;
+    if (result.exitoso) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('¡Bienvenido ${result.usuario!.nombre}! 🏄'),
+        backgroundColor: SupColors.semaforoVerde));
+      widget.onGoogleLoginSuccess();
+    } else if (result.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Error de autenticación: ${result.error}'),
+        backgroundColor: SupColors.semaforoRojo));
+    }
+  }
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 28),
-    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      const Text('🏄', style: TextStyle(fontSize: 72)),
-      const SizedBox(height: 24),
-      const Text('Bienvenido a\nSUPReady', style: SupTextStyles.heading1,
-          textAlign: TextAlign.center),
-      const SizedBox(height: 12),
-      const Text('Tu compañero para remar seguro.\nCondiciones en tiempo real, GPS y comunidad.',
-          style: SupTextStyles.body, textAlign: TextAlign.center),
-      const SizedBox(height: 40),
-      TextField(
-        onChanged: onNombre,
-        textCapitalization: TextCapitalization.words,
-        style: const TextStyle(color: SupColors.textPrimary, fontSize: 18),
-        decoration: InputDecoration(
-          hintText: '¿Cómo te llamás?',
-          hintStyle: const TextStyle(color: SupColors.textSecondary),
-          filled: true, fillColor: SupColors.surface,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: SupColors.divider)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: SupColors.divider)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: SupColors.cyanNeon, width: 2)),
-          prefixIcon: const Icon(Icons.person_outline, color: SupColors.cyanNeon)),
-      ),
-    ]),
+    child: SingleChildScrollView(
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        const SizedBox(height: 20),
+        const Text('🏄', style: TextStyle(fontSize: 72)),
+        const SizedBox(height: 16),
+        const Text('Bienvenido a\nSUPReady', style: SupTextStyles.heading1,
+            textAlign: TextAlign.center),
+        const SizedBox(height: 8),
+        const Text('Tu compañero para remar seguro.\nCondiciones en tiempo real, GPS y comunidad.',
+            style: SupTextStyles.body, textAlign: TextAlign.center),
+        const SizedBox(height: 24),
+        ElevatedButton.icon(
+          onPressed: _cargando ? null : _loginGoogle,
+          icon: _cargando
+              ? const SizedBox(width: 20, height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: SupColors.backgroundDeep))
+              : const Icon(Icons.login),
+          label: Text(_cargando ? 'CONECTANDO...' : 'INICIAR CON GOOGLE'),
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 52),
+            backgroundColor: SupColors.cyanNeon,
+            foregroundColor: SupColors.backgroundDeep,
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Row(children: [
+          Expanded(child: Divider(color: SupColors.divider)),
+          Padding(padding: EdgeInsets.symmetric(horizontal: 12),
+              child: Text('o ingresá como invitado', style: SupTextStyles.body)),
+          Expanded(child: Divider(color: SupColors.divider)),
+        ]),
+        const SizedBox(height: 16),
+        TextField(
+          onChanged: widget.onNombre,
+          textCapitalization: TextCapitalization.words,
+          style: const TextStyle(color: SupColors.textPrimary, fontSize: 18),
+          decoration: InputDecoration(
+            hintText: 'Tu nombre',
+            hintStyle: const TextStyle(color: SupColors.textSecondary),
+            filled: true, fillColor: SupColors.surface,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: SupColors.divider)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: SupColors.divider)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: SupColors.cyanNeon, width: 2)),
+            prefixIcon: const Icon(Icons.person_outline, color: SupColors.cyanNeon)),
+        ),
+        const SizedBox(height: 20),
+      ]),
+    ),
   );
 }
 
@@ -214,51 +277,138 @@ class _Paso2Nivel extends StatelessWidget {
 }
 
 // ── Paso 3: Spot favorito ─────────────────────────────────────
-class _Paso3Spot extends StatelessWidget {
+class _Paso3Spot extends StatefulWidget {
   final List<SpotModel> spots;
   final SpotModel? spotActual;
   final ValueChanged<SpotModel> onSpot;
-  const _Paso3Spot({required this.spots, required this.spotActual, required this.onSpot});
+  final VoidCallback onSpotCreated;
+  const _Paso3Spot({
+    required this.spots,
+    required this.spotActual,
+    required this.onSpot,
+    required this.onSpotCreated,
+  });
+
+  @override
+  State<_Paso3Spot> createState() => _Paso3SpotState();
+}
+
+class _Paso3SpotState extends State<_Paso3Spot> {
+  final _nombreCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+
+  void _mostrarCrearSpot() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: SupColors.surfaceElevated,
+        title: const Text('Agregar Spot Personalizado',
+            style: TextStyle(color: SupColors.textPrimary, fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _nombreCtrl,
+                style: const TextStyle(color: SupColors.textPrimary),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre del Spot',
+                  labelStyle: TextStyle(color: SupColors.textSecondary),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _descCtrl,
+                style: const TextStyle(color: SupColors.textPrimary),
+                decoration: const InputDecoration(
+                  labelText: 'Descripción / Ubicación',
+                  labelStyle: TextStyle(color: SupColors.textSecondary),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCELAR', style: TextStyle(color: SupColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final nombre = _nombreCtrl.text.trim();
+              final desc = _descCtrl.text.trim();
+              if (nombre.isNotEmpty) {
+                final nuevoSpot = SpotModel(
+                  nombre: nombre,
+                  descripcion: desc,
+                  latitud: -34.6037, // Default coordinates (Buenos Aires / standard fallback)
+                  longitud: -58.3816,
+                  esFavorito: false,
+                );
+                final id = await SupDatabase.instance.insertarSpot(nuevoSpot);
+                widget.onSpot(nuevoSpot.copyWith(esFavorito: false).copyWith(condiciones: null));
+                widget.onSpotCreated();
+                _nombreCtrl.clear();
+                _descCtrl.clear();
+                if (mounted) Navigator.pop(ctx);
+              }
+            },
+            child: const Text('AGREGAR'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 28),
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       const Text('⭐', style: TextStyle(fontSize: 64)),
-      const SizedBox(height: 20),
+      const SizedBox(height: 10),
       const Text('¿Tu spot favorito?', style: SupTextStyles.heading1,
           textAlign: TextAlign.center),
-      const SizedBox(height: 8),
-      const Text('Lo verás en la pantalla de inicio\ncon el clima en tiempo real.',
+      const SizedBox(height: 6),
+      const Text('Lo verás en la pantalla de inicio con el clima.',
           style: SupTextStyles.body, textAlign: TextAlign.center),
-      const SizedBox(height: 32),
-      if (spots.isEmpty)
+      const SizedBox(height: 16),
+      if (widget.spots.isEmpty)
         const CircularProgressIndicator(color: SupColors.cyanNeon)
       else
-        ...spots.map((s) => GestureDetector(
-          onTap: () => onSpot(s),
+        ...widget.spots.take(3).map((s) => GestureDetector(
+          onTap: () => widget.onSpot(s),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: spotActual?.spotId == s.spotId ? SupColors.cyanNeonDim : SupColors.surface,
+              color: widget.spotActual?.spotId == s.spotId ? SupColors.cyanNeonDim : SupColors.surface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: spotActual?.spotId == s.spotId ? SupColors.cyanNeon : SupColors.divider,
-                width: spotActual?.spotId == s.spotId ? 2 : 1)),
+                color: widget.spotActual?.spotId == s.spotId ? SupColors.cyanNeon : SupColors.divider,
+                width: widget.spotActual?.spotId == s.spotId ? 2 : 1)),
             child: Row(children: [
-              const Icon(Icons.location_on_outlined, color: SupColors.cyanNeon, size: 20),
+              const Icon(Icons.location_on_outlined, color: SupColors.cyanNeon, size: 18),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(s.nombre, style: SupTextStyles.heading2.copyWith(fontSize: 15)),
-                Text(s.descripcion, style: SupTextStyles.body.copyWith(fontSize: 12)),
+                Text(s.nombre, style: SupTextStyles.heading2.copyWith(fontSize: 14)),
+                Text(s.descripcion, style: SupTextStyles.body.copyWith(fontSize: 11)),
               ])),
-              if (spotActual?.spotId == s.spotId)
+              if (widget.spotActual?.spotId == s.spotId)
                 const Icon(Icons.star_rounded, color: Colors.amber),
             ]),
           ),
         )),
+      const SizedBox(height: 12),
+      OutlinedButton.icon(
+        onPressed: _mostrarCrearSpot,
+        icon: const Icon(Icons.add, color: SupColors.cyanNeon),
+        label: const Text('AGREGAR OTRO SPOT', style: TextStyle(color: SupColors.cyanNeon, fontFamily: 'SpaceGrotesk')),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: SupColors.cyanNeon),
+          minimumSize: const Size(double.infinity, 44),
+        ),
+      ),
     ]),
   );
 }

@@ -41,16 +41,20 @@ class FirestoreService {
   /// Stream de salidas públicas activas (tiempo real)
   Stream<List<SalidaGrupal>> streamSalidasPublicas() {
     return _db.collection('salidas')
-        .where('esPublica', isEqualTo: true)
-        .where('estado', whereIn: ['abierta', 'enCurso'])
-        .orderBy('fechaHora')
         .snapshots()
         .asyncMap((snap) async {
           final salidas = <SalidaGrupal>[];
           for (final doc in snap.docs) {
-            final participantes = await _getParticipantes(doc.id);
-            salidas.add(_salidaFromDoc(doc, participantes));
+            final data = doc.data();
+            final esPublica = data['esPublica'] as bool? ?? true;
+            final estado = data['estado'] as String? ?? 'abierta';
+            if (esPublica && (estado == 'abierta' || estado == 'enCurso')) {
+              final participantes = await _getParticipantes(doc.id);
+              salidas.add(_salidaFromDoc(doc, participantes));
+            }
           }
+          // Ordenar localmente por fechaHora para evitar requerir un índice compuesto
+          salidas.sort((a, b) => a.fechaHora.compareTo(b.fechaHora));
           return salidas;
         });
   }
@@ -58,18 +62,22 @@ class FirestoreService {
   /// Stream de salidas de un usuario (organizador o participante)
   Stream<List<SalidaGrupal>> streamMisSalidas(String usuarioId) {
     return _db.collection('salidas')
-        .where('estado', whereNotIn: ['cancelada'])
-        .orderBy('fechaHora', descending: true)
         .snapshots()
         .asyncMap((snap) async {
           final salidas = <SalidaGrupal>[];
           for (final doc in snap.docs) {
             final data = doc.data();
+            final estado = data['estado'] as String? ?? 'abierta';
+            if (estado == 'cancelada') continue;
             final participantes = await _getParticipantes(doc.id);
             final esMio = data['organizadorId'] == usuarioId ||
                 participantes.any((p) => p.usuarioId.toString() == usuarioId);
-            if (esMio) salidas.add(_salidaFromDoc(doc, participantes));
+            if (esMio) {
+              salidas.add(_salidaFromDoc(doc, participantes));
+            }
           }
+          // Ordenar localmente por fechaHora descendente
+          salidas.sort((a, b) => b.fechaHora.compareTo(a.fechaHora));
           return salidas;
         });
   }

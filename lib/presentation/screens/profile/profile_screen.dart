@@ -32,9 +32,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final usuario = AuthService.instance.usuarioActual;
+    final canPop = Navigator.canPop(context);
     return Scaffold(
       backgroundColor: SupColors.backgroundDeep,
-      appBar: AppBar(title: const Text('Mi Perfil')),
+      appBar: AppBar(
+        title: const Text('Mi Perfil'),
+        leading: IconButton(
+          icon: Icon(canPop ? Icons.arrow_back : Icons.close),
+          onPressed: () {
+            if (canPop) {
+              Navigator.pop(context);
+            } else {
+              context.go('/home');
+            }
+          },
+        ),
+      ),
       body: usuario != null ? _buildPerfil(usuario) : _buildLogin(),
     );
   }
