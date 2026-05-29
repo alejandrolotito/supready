@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../models/models.dart';
+import '../../../models/models.dart';
+
 
 // ============================================================
 // SUPReady - Firestore Service (multiusuario en tiempo real)
@@ -177,7 +178,8 @@ class FirestoreService {
       'nivel':     u.nivelExperiencia.name,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
-    /// Genera colecciones y documentos iniciales si no existen
+    }
+/// Genera colecciones y documentos iniciales si no existen
   Future<void> generarTablasIniciales() async {
     // Salidas: crear una salida de ejemplo si la colección está vacía
     final salidasSnap = await _db.collection('salidas').limit(1).get();
@@ -216,7 +218,7 @@ class FirestoreService {
     }
   }
 
-}
+
 
 
 // ─── DTO mensaje de chat ──────────────────────────────────────
