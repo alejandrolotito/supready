@@ -7,151 +7,16 @@ Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
 Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-lib/data/datasources/remote/firestore_service.dart:15:24: Error: Can't find '}' to match '{'.
-class FirestoreService {
-                       ^
-lib/data/datasources/remote/firestore_service.dart:225:1: Error: Classes can't be declared inside other classes.
-Try moving the class to the top-level.
-class MensajeChat {
-^^^^^
-lib/data/datasources/remote/firestore_service.dart:2:8: Error: Error when reading 'lib/models/models.dart': No such file or directory
-import '../../../models/models.dart';
-       ^
-lib/data/datasources/remote/firestore_service.dart:24:30: Error: Type 'SalidaGrupal' not found.
-  Future<String> crearSalida(SalidaGrupal salida, String autorNombre) async {
-                             ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:42:15: Error: Type 'SalidaGrupal' not found.
-  Stream<List<SalidaGrupal>> streamSalidasPublicas() {
-              ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:59:15: Error: Type 'SalidaGrupal' not found.
-  Stream<List<SalidaGrupal>> streamMisSalidas(String usuarioId) {
-              ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:78:50: Error: Type 'UsuarioModel' not found.
-  Future<void> anotarseEnSalida(String salidaId, UsuarioModel usuario) async {
-                                                 ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:99:15: Error: Type 'ParticipanteSalida' not found.
-  Future<List<ParticipanteSalida>> _getParticipantes(String salidaId) async {
-              ^^^^^^^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:113:3: Error: Type 'SalidaGrupal' not found.
-  SalidaGrupal _salidaFromDoc(
-  ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:115:12: Error: Type 'ParticipanteSalida' not found.
-      List<ParticipanteSalida> participantes) {
-           ^^^^^^^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:140:15: Error: Type 'MensajeChat' not found.
-  Stream<List<MensajeChat>> streamMensajes(String salidaId) {
-              ^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:158:47: Error: Type 'UsuarioModel' not found.
-  Future<void> enviarMensaje(String salidaId, UsuarioModel autor, String texto) async {
-                                              ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:172:29: Error: Type 'UsuarioModel' not found.
-  Future<void> upsertPerfil(UsuarioModel u) async {
-                            ^^^^^^^^^^^^
-lib/presentation/screens/salidas/chat_salida_screen.dart:165:24: Error: Type 'MensajeChat' not found.
-  Widget _buildMensaje(MensajeChat m) {
-                       ^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:24:30: Error: 'SalidaGrupal' isn't a type.
-  Future<String> crearSalida(SalidaGrupal salida, String autorNombre) async {
-                             ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:49:28: Error: 'SalidaGrupal' isn't a type.
-          final salidas = <SalidaGrupal>[];
-                           ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:65:28: Error: 'SalidaGrupal' isn't a type.
-          final salidas = <SalidaGrupal>[];
-                           ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:70:44: Error: The getter 'usuarioId' isn't defined for the class 'Object?'.
- - 'Object' is from 'dart:core'.
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'usuarioId'.
-                participantes.any((p) => p.usuarioId.toString() == usuarioId);
-                                           ^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:78:50: Error: 'UsuarioModel' isn't a type.
-  Future<void> anotarseEnSalida(String salidaId, UsuarioModel usuario) async {
-                                                 ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:103:33: Error: The method 'ParticipanteSalida' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'ParticipanteSalida'.
-    return snap.docs.map((d) => ParticipanteSalida(
-                                ^^^^^^^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:107:15: Error: The getter 'EstadoParticipante' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'EstadoParticipante'.
-      estado: EstadoParticipante.values.firstWhere(
-              ^^^^^^^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:109:25: Error: The getter 'EstadoParticipante' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'EstadoParticipante'.
-          orElse: () => EstadoParticipante.confirmado),
-                        ^^^^^^^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:115:12: Error: 'ParticipanteSalida' isn't a type.
-      List<ParticipanteSalida> participantes) {
-           ^^^^^^^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:117:12: Error: The method 'SalidaGrupal' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'SalidaGrupal'.
-    return SalidaGrupal(
-           ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:124:20: Error: The getter 'NivelSalida' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'NivelSalida'.
-      nivelMinimo: NivelSalida.values.firstWhere(
-                   ^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:126:25: Error: The getter 'NivelSalida' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'NivelSalida'.
-          orElse: () => NivelSalida.todos),
-                        ^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:129:20: Error: The getter 'EstadoSalida' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'EstadoSalida'.
-      estado:      EstadoSalida.values.firstWhere(
-                   ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:131:25: Error: The getter 'EstadoSalida' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'EstadoSalida'.
-          orElse: () => EstadoSalida.abierta),
-                        ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:146:45: Error: The method 'MensajeChat' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'MensajeChat'.
-        .map((snap) => snap.docs.map((d) => MensajeChat(
-                                            ^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:158:47: Error: 'UsuarioModel' isn't a type.
-  Future<void> enviarMensaje(String salidaId, UsuarioModel autor, String texto) async {
-                                              ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:172:29: Error: 'UsuarioModel' isn't a type.
-  Future<void> upsertPerfil(UsuarioModel u) async {
-                            ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:188:9: Error: The method 'SalidaGrupal' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'SalidaGrupal'.
-        SalidaGrupal(
-        ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:195:24: Error: The getter 'NivelSalida' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'NivelSalida'.
-          nivelMinimo: NivelSalida.todos,
-                       ^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:198:19: Error: The getter 'EstadoSalida' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'EstadoSalida'.
-          estado: EstadoSalida.abierta,
-                  ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:209:26: Error: The method 'UsuarioModel' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'UsuarioModel'.
-      await upsertPerfil(UsuarioModel(
-                         ^^^^^^^^^^^^
-lib/data/datasources/remote/firestore_service.dart:216:27: Error: The getter 'NivelUsuario' isn't defined for the class 'FirestoreService'.
- - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'NivelUsuario'.
-        nivelExperiencia: NivelUsuario.iniciante,
-                          ^^^^^^^^^^^^
-lib/presentation/screens/salidas/chat_salida_screen.dart:82:41: Error: 'MensajeChat' isn't a type.
-              child: StreamBuilder<List<MensajeChat>>(
-                                        ^^^^^^^^^^^
-lib/presentation/screens/salidas/chat_salida_screen.dart:165:24: Error: 'MensajeChat' isn't a type.
-  Widget _buildMensaje(MensajeChat m) {
-                       ^^^^^^^^^^^
+lib/presentation/screens/onboarding/onboarding_screen.dart:43:27: Error: The argument type 'NivelExperiencia' can't be assigned to the parameter type 'NivelUsuario'.
+ - 'NivelExperiencia' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
+ - 'NivelUsuario' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
+        nivelExperiencia: _nivel));
+                          ^
+lib/data/models/models.dart:34:47: Error: The argument type 'NivelExperiencia' can't be assigned to the parameter type 'NivelUsuario'.
+ - 'NivelExperiencia' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
+ - 'NivelUsuario' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
+    nivelExperiencia: NivelExperiencia.values.firstWhere(
+                                              ^
 Target kernel_snapshot failed: Exception
 
 Note: Some input files use or override a deprecated API.
@@ -169,6 +34,6 @@ Execution failed for task ':app:compileFlutterBuildDebug'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 49s
-Running Gradle task 'assembleDebug'...                            169.6s
+BUILD FAILED in 3m 2s
+Running Gradle task 'assembleDebug'...                            183.3s
 Gradle task assembleDebug failed with exit code 1
