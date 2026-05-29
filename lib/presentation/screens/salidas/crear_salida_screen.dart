@@ -64,16 +64,52 @@ class _CrearSalidaScreenState extends State<CrearSalidaScreen> {
       cuposMax: _cupos, esPublica: _esPublica,
       descripcion: _descCtrl.text.trim(),
     );
-    // Guardar en Firestore (multiusuario)
-    await FirestoreService.instance.crearSalida(salida, usuario.nombre);
-    // También subir perfil público del organizador
-    await FirestoreService.instance.upsertPerfil(usuario);
-    setState(() => _guardando = false);
-    if (mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('¡Salida creada! Otros palistas ya pueden verla 🏄'),
-          backgroundColor: SupColors.semaforoVerde));
+    try {
+      // 1. Guardar en Firestore (multiusuario)
+      final firestoreId = await FirestoreService.instance.crearSalida(salida, usuario.nombre);
+      
+      // 2. También subir perfil público del organizador
+      await FirestoreService.instance.upsertPerfil(usuario);
+
+      // 3. Guardar en la base de datos local SQLite para reflejarlo en la pestaña "Mis Salidas"
+      final localSalida = SalidaGrupal(
+        firestoreId: firestoreId,
+        organizadorId: salida.organizadorId,
+        spotId: salida.spotId,
+        spotNombre: salida.spotNombre,
+        fechaHora: salida.fechaHora,
+        nivelMinimo: salida.nivelMinimo,
+        cuposMax: salida.cuposMax,
+        esPublica: salida.esPublica,
+        estado: salida.estado,
+        descripcion: salida.descripcion,
+      );
+      final localId = await SupDatabase.instance.crearSalida(localSalida);
+
+      // Auto-anotar al creador en la subcolección local y remota
+      final participante = ParticipanteSalida(
+        usuarioId: usuario.usuarioId ?? 0,
+        nombre: usuario.nombre,
+        avatarUrl: usuario.avatarUrl,
+        estado: EstadoParticipante.confirmado,
+      );
+      await SupDatabase.instance.anotarseEnSalida(localId, participante);
+      await FirestoreService.instance.anotarseEnSalida(firestoreId, usuario);
+
+      setState(() => _guardando = false);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('¡Salida creada! Otros palistas ya pueden verla 🏄'),
+            backgroundColor: SupColors.semaforoVerde));
+      }
+    } catch (e) {
+      setState(() => _guardando = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Error al crear salida: $e'),
+            backgroundColor: SupColors.semaforoRojo));
+      }
     }
   }
 
