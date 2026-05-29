@@ -20,11 +20,35 @@ import 'presentation/screens/onboarding/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  
+  // 1. Inicializar Firebase
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint("Error inicializando Firebase: $e");
+  }
 
-  // Restaurar sesión (Firebase Auth persiste automáticamente)
-  await AuthService.instance.restaurarSesion();
-await FirestoreService.instance.generarTablasIniciales();
+  // 2. Cargar preferencias locales rápido (sin esperar a la red)
+  final prefs = await SharedPreferences.getInstance();
+  final onboardingDone = prefs.getBool('onboarding_done') ?? false;
+
+  // 3. Restaurar sesión de forma segura y sin bloquear la pantalla de carga principal
+  try {
+    await AuthService.instance.restaurarSesion().timeout(
+      const Duration(seconds: 3),
+      onTimeout: () {
+        debugPrint("Timeout al restaurar sesión");
+        return false;
+      },
+    );
+  } catch (e) {
+    debugPrint("Error restaurando sesión: $e");
+  }
+
+  // Inicializar tablas Firestore de forma asíncrona en segundo plano para no congelar el splash screen
+  FirestoreService.instance.generarTablasIniciales().catchError((e) {
+    debugPrint("Error al generar tablas Firestore iniciales: $e");
+  });
 
   TrackingState.instance;
 
@@ -35,10 +59,6 @@ await FirestoreService.instance.generarTablasIniciales();
     statusBarIconBrightness: Brightness.light,
   ));
 
-  final prefs = await SharedPreferences.getInstance();
-  final onboardingDone = prefs.getBool('onboarding_done') ?? false;
-
-  // Si ya tiene sesión activa → home directamente
   final tieneSession = AuthService.instance.estaAutenticado;
   final initialRoute = (!onboardingDone && !tieneSession) ? '/onboarding' : '/home';
 
