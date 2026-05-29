@@ -24,17 +24,15 @@ subprojects {
 }
 
 subprojects {
-    afterEvaluate { project ->
-        if (project.hasProperty("android")) {
-            project.android {
-                if (namespace == null) {
-                    namespace = project.group.toString()
-                }
-                compileSdkVersion 34
-                defaultConfig {
-                    minSdkVersion 21
-                    targetSdkVersion 34
-                }
+    plugins.withType(com.android.build.gradle.BasePlugin) {
+        project.android {
+            if (namespace == null) {
+                namespace = project.group.toString()
+            }
+            compileSdkVersion 34
+            defaultConfig {
+                minSdkVersion 21
+                targetSdkVersion 34
             }
         }
     }
