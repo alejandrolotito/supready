@@ -31,8 +31,8 @@ class UsuarioModel {
     nombre: m['nombre'] as String, apellido: m['apellido'] as String,
     email: m['email'] as String, googleId: m['google_id'] as String?,
     avatarUrl: m['avatar_url'] as String?,
-    nivelExperiencia: NivelExperiencia.values.firstWhere(
-      (e) => e.name == m['nivel_experiencia'], orElse: () => NivelExperiencia.principiante),
+    nivelExperiencia: NivelUsuario.values.firstWhere(
+      (e) => e.name == m['nivel_experiencia'], orElse: () => NivelUsuario.iniciante),
   );
 }
 

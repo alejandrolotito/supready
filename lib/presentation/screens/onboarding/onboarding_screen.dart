@@ -19,7 +19,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _pageCtrl = PageController();
   int _pagina = 0;
   String _nombre = '';
-  NivelExperiencia _nivel = NivelExperiencia.principiante;
+  NivelUsuario _nivel = NivelUsuario.iniciante;
   SpotModel? _spotFavorito;
   List<SpotModel> _spots = [];
 
@@ -162,16 +162,16 @@ class _Paso1Bienvenida extends StatelessWidget {
 
 // ── Paso 2: Nivel ─────────────────────────────────────────────
 class _Paso2Nivel extends StatelessWidget {
-  final NivelExperiencia nivelActual;
-  final ValueChanged<NivelExperiencia> onNivel;
+  final NivelUsuario nivelActual;
+  final ValueChanged<NivelUsuario> onNivel;
   const _Paso2Nivel({required this.nivelActual, required this.onNivel});
 
   static const _niveles = [
-    (nivel: NivelExperiencia.principiante, emoji: '🟢', label: 'Principiante',
+    (nivel: NivelUsuario.iniciante, emoji: '🟢', label: 'Principiante',
      desc: 'Llevo poco tiempo, aguas tranquilas'),
-    (nivel: NivelExperiencia.intermedio,   emoji: '🟡', label: 'Intermedio',
+    (nivel: NivelUsuario.intermedio,   emoji: '🟡', label: 'Intermedio',
      desc: 'Ya manejo el remo con soltura'),
-    (nivel: NivelExperiencia.avanzado,     emoji: '🔴', label: 'Avanzado',
+    (nivel: NivelUsuario.avanzado,     emoji: '🔴', label: 'Avanzado',
      desc: 'Navego en cualquier condición'),
   ];
 
