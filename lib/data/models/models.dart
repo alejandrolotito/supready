@@ -189,6 +189,7 @@ enum EstadoParticipante { confirmado, enEspera, remando, finalizado }
 
 class SalidaGrupal {
   final int? salidaId;
+  final String? firestoreId;
   final int organizadorId;
   final int spotId;
   final String spotNombre;
