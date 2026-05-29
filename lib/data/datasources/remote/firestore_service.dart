@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../models/models.dart';
+import '../../models/models.dart';
 
 
 // ============================================================
@@ -221,6 +221,7 @@ class FirestoreService {
 
 
 
+}
 // ─── DTO mensaje de chat ──────────────────────────────────────
 class MensajeChat {
   final String id, autorId, autorNombre, texto;

@@ -3,18 +3,19 @@
 // ============================================================
 
 enum NivelExperiencia { principiante, intermedio, avanzado }
+enum NivelUsuario { iniciante, intermedio, avanzado }
 enum SupReadyIndex { verde, amarillo, rojo, sinDatos }
 
 class UsuarioModel {
   final int? usuarioId;
   final String nombre, apellido, email;
   final String? googleId, avatarUrl;
-  final NivelExperiencia nivelExperiencia;
+  final NivelUsuario nivelExperiencia;
 
   const UsuarioModel({
     this.usuarioId, required this.nombre, required this.apellido,
     required this.email, this.googleId, this.avatarUrl,
-    this.nivelExperiencia = NivelExperiencia.principiante,
+    this.nivelExperiencia = NivelUsuario.iniciante,
   });
 
   String get nombreCompleto => '$nombre $apellido';
