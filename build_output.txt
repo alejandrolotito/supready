@@ -7,15 +7,34 @@ Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
 Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-Error: unable to find directory entry in pubspec.yaml: /home/runner/work/supready/supready/assets/images/
+lib/data/models/models.dart:205:10: Error: 'firestoreId' isn't an instance field of this class.
+    this.firestoreId,
+         ^^^^^^^^^^^
+lib/data/models/models.dart:268:42: Error: The getter 'firestoreId' isn't defined for the class 'SalidaGrupal'.
+ - 'SalidaGrupal' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'firestoreId'.
+        salidaId: salidaId, firestoreId: firestoreId, organizadorId: organizadorId,
+                                         ^^^^^^^^^^^
+lib/presentation/screens/salidas/detalle_salida_screen.dart:21:37: Error: The getter 'firestoreId' isn't defined for the class 'SalidaGrupal'.
+ - 'SalidaGrupal' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'firestoreId'.
+  String? get _fid => widget.salida.firestoreId;
+                                    ^^^^^^^^^^^
+lib/presentation/screens/salidas/chat_salida_screen.dart:24:45: Error: The getter 'firestoreId' isn't defined for the class 'SalidaGrupal'.
+ - 'SalidaGrupal' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'firestoreId'.
+  String? get _firestoreId => widget.salida.firestoreId;
+                                            ^^^^^^^^^^^
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
+Target kernel_snapshot failed: Exception
+
 
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Execution failed for task ':app:processDebugGoogleServices'.
-> No matching client found for package name 'com.sup.ready.go' in /home/runner/work/supready/supready/android/app/google-services.json
+Execution failed for task ':app:compileFlutterBuildDebug'.
+> Process 'command '/opt/hostedtoolcache/flutter/stable-3.22.3-x64/flutter/bin/flutter'' finished with non-zero exit value 1
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
@@ -23,6 +42,6 @@ Execution failed for task ':app:processDebugGoogleServices'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 49s
-Running Gradle task 'assembleDebug'...                            170.1s
+BUILD FAILED in 2m 29s
+Running Gradle task 'assembleDebug'...                            150.4s
 Gradle task assembleDebug failed with exit code 1
