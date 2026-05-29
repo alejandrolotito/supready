@@ -7,28 +7,15 @@ Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
 Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-lib/data/models/models.dart:205:10: Error: 'firestoreId' isn't an instance field of this class.
-    this.firestoreId,
-         ^^^^^^^^^^^
-lib/data/models/models.dart:268:42: Error: The getter 'firestoreId' isn't defined for the class 'SalidaGrupal'.
- - 'SalidaGrupal' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'firestoreId'.
-        salidaId: salidaId, firestoreId: firestoreId, organizadorId: organizadorId,
-                                         ^^^^^^^^^^^
-lib/presentation/screens/salidas/detalle_salida_screen.dart:21:37: Error: The getter 'firestoreId' isn't defined for the class 'SalidaGrupal'.
- - 'SalidaGrupal' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'firestoreId'.
-  String? get _fid => widget.salida.firestoreId;
-                                    ^^^^^^^^^^^
-lib/presentation/screens/salidas/chat_salida_screen.dart:24:45: Error: The getter 'firestoreId' isn't defined for the class 'SalidaGrupal'.
- - 'SalidaGrupal' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'firestoreId'.
-  String? get _firestoreId => widget.salida.firestoreId;
-                                            ^^^^^^^^^^^
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
+lib/data/datasources/remote/firestore_service.dart:214:27: Error: The getter 'NivelUsuario' isn't defined for the class 'FirestoreService'.
+ - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'NivelUsuario'.
+        nivelExperiencia: NivelUsuario.iniciante,
+                          ^^^^^^^^^^^^
 Target kernel_snapshot failed: Exception
 
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
 
 FAILURE: Build failed with an exception.
 
@@ -42,6 +29,6 @@ Execution failed for task ':app:compileFlutterBuildDebug'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 29s
-Running Gradle task 'assembleDebug'...                            150.4s
+BUILD FAILED in 2m 56s
+Running Gradle task 'assembleDebug'...                            177.4s
 Gradle task assembleDebug failed with exit code 1
