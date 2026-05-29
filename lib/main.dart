@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/tracking_state.dart';
 import 'data/datasources/remote/auth_service.dart';
+import 'data/datasources/remote/firestore_service.dart';
 import 'presentation/screens/tracking/tracking_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/spots/spots_screen.dart';
@@ -23,6 +24,7 @@ void main() async {
 
   // Restaurar sesión (Firebase Auth persiste automáticamente)
   await AuthService.instance.restaurarSesion();
+await FirestoreService.instance.generarTablasIniciales();
 
   TrackingState.instance;
 
