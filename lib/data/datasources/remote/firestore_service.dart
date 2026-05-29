@@ -177,7 +177,46 @@ class FirestoreService {
       'nivel':     u.nivelExperiencia.name,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+    /// Genera colecciones y documentos iniciales si no existen
+  Future<void> generarTablasIniciales() async {
+    // Salidas: crear una salida de ejemplo si la colección está vacía
+    final salidasSnap = await _db.collection('salidas').limit(1).get();
+    if (salidasSnap.docs.isEmpty) {
+      await crearSalida(
+        SalidaGrupal(
+          salidaId: 0,
+          firestoreId: '',
+          organizadorId: 0,
+          spotId: 0,
+          spotNombre: 'Ejemplo Spot',
+          fechaHora: DateTime.now().add(const Duration(hours: 1)),
+          nivelMinimo: NivelSalida.todos,
+          cuposMax: 10,
+          esPublica: true,
+          estado: EstadoSalida.abierta,
+          descripcion: 'Salida de ejemplo creada automáticamente.',
+          participantes: [],
+        ),
+        'OrganizadorDemo',
+      );
+    }
+
+    // Usuarios: crear un usuario de ejemplo si la colección está vacía
+    final usuariosSnap = await _db.collection('usuarios').limit(1).get();
+    if (usuariosSnap.docs.isEmpty) {
+      await upsertPerfil(UsuarioModel(
+        googleId: null,
+        usuarioId: 0,
+        email: 'demo@example.com',
+        nombre: 'Demo',
+        apellido: 'Usuario',
+        avatarUrl: '',
+        nivelExperiencia: NivelUsuario.iniciante,
+      ));
+    }
   }
+
+}
 }
 
 // ─── DTO mensaje de chat ──────────────────────────────────────
