@@ -217,7 +217,7 @@ class FirestoreService {
   }
 
 }
-}
+
 
 // ─── DTO mensaje de chat ──────────────────────────────────────
 class MensajeChat {
