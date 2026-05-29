@@ -202,6 +202,7 @@ class SalidaGrupal {
 
   const SalidaGrupal({
     this.salidaId,
+    this.firestoreId,
     required this.organizadorId,
     required this.spotId,
     required this.spotNombre,
@@ -264,7 +265,7 @@ class ParticipanteSalida {
 extension SalidaGrupalExt on SalidaGrupal {
   SalidaGrupal copyWithParticipantes(List<ParticipanteSalida> participantes) =>
       SalidaGrupal(
-        salidaId: salidaId, organizadorId: organizadorId,
+        salidaId: salidaId, firestoreId: firestoreId, organizadorId: organizadorId,
         spotId: spotId, spotNombre: spotNombre, fechaHora: fechaHora,
         nivelMinimo: nivelMinimo, cuposMax: cuposMax,
         esPublica: esPublica, estado: estado, descripcion: descripcion,
