@@ -1,39 +1,40 @@
 
 Running Gradle task 'assembleDebug'...                          
-Checking the license for package Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/licenses
-License for package Android SDK Build-Tools 33.0.1 accepted.
-Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
-"Install Android SDK Build-Tools 33.0.1 v.33.0.1" ready.
-Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
-"Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
-"Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-lib/presentation/screens/onboarding/onboarding_screen.dart:43:27: Error: The argument type 'NivelExperiencia' can't be assigned to the parameter type 'NivelUsuario'.
- - 'NivelExperiencia' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
- - 'NivelUsuario' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
-        nivelExperiencia: _nivel));
-                          ^
-lib/data/models/models.dart:34:47: Error: The argument type 'NivelExperiencia' can't be assigned to the parameter type 'NivelUsuario'.
- - 'NivelExperiencia' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
- - 'NivelUsuario' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
-    nivelExperiencia: NivelExperiencia.values.firstWhere(
-                                              ^
-Target kernel_snapshot failed: Exception
 
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
+FAILURE: Build completed with 2 failures.
 
-FAILURE: Build failed with an exception.
+1: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/runner/work/supready/supready/android/build.gradle' line: 27
 
 * What went wrong:
-Execution failed for task ':app:compileFlutterBuildDebug'.
-> Process 'command '/opt/hostedtoolcache/flutter/stable-3.22.3-x64/flutter/bin/flutter'' finished with non-zero exit value 1
+A problem occurred evaluating root project 'android'.
+> Cannot run Project.afterEvaluate(Closure) when the project is already evaluated.
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
+==============================================================================
 
-BUILD FAILED in 3m 2s
-Running Gradle task 'assembleDebug'...                            183.3s
+2: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/runner/work/supready/supready/android/build.gradle' line: 27
+
+* What went wrong:
+A problem occurred evaluating root project 'android'.
+> Cannot run Project.afterEvaluate(Closure) when the project is already evaluated.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 1m 21s
+Running Gradle task 'assembleDebug'...                             82.1s
 Gradle task assembleDebug failed with exit code 1
