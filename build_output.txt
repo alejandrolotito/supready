@@ -7,11 +7,35 @@ Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
 Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
+lib/data/datasources/remote/firestore_service.dart:14:24: Error: Can't find '}' to match '{'.
+class FirestoreService {
+                       ^
+lib/data/datasources/remote/firestore_service.dart:223:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class MensajeChat {
+^^^^^
+lib/data/datasources/remote/firestore_service.dart:139:15: Error: Type 'MensajeChat' not found.
+  Stream<List<MensajeChat>> streamMensajes(String salidaId) {
+              ^^^^^^^^^^^
+lib/presentation/screens/salidas/chat_salida_screen.dart:165:24: Error: Type 'MensajeChat' not found.
+  Widget _buildMensaje(MensajeChat m) {
+                       ^^^^^^^^^^^
+lib/data/datasources/remote/firestore_service.dart:145:45: Error: The method 'MensajeChat' isn't defined for the class 'FirestoreService'.
+ - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
+Try correcting the name to the name of an existing method, or defining a method named 'MensajeChat'.
+        .map((snap) => snap.docs.map((d) => MensajeChat(
+                                            ^^^^^^^^^^^
 lib/data/datasources/remote/firestore_service.dart:214:27: Error: The getter 'NivelUsuario' isn't defined for the class 'FirestoreService'.
  - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
 Try correcting the name to the name of an existing getter, or defining a getter or field named 'NivelUsuario'.
         nivelExperiencia: NivelUsuario.iniciante,
                           ^^^^^^^^^^^^
+lib/presentation/screens/salidas/chat_salida_screen.dart:82:41: Error: 'MensajeChat' isn't a type.
+              child: StreamBuilder<List<MensajeChat>>(
+                                        ^^^^^^^^^^^
+lib/presentation/screens/salidas/chat_salida_screen.dart:165:24: Error: 'MensajeChat' isn't a type.
+  Widget _buildMensaje(MensajeChat m) {
+                       ^^^^^^^^^^^
 Target kernel_snapshot failed: Exception
 
 Note: Some input files use or override a deprecated API.
@@ -30,5 +54,5 @@ Execution failed for task ':app:compileFlutterBuildDebug'.
 > Get more help at https://help.gradle.org.
 
 BUILD FAILED in 2m 56s
-Running Gradle task 'assembleDebug'...                            177.4s
+Running Gradle task 'assembleDebug'...                            176.6s
 Gradle task assembleDebug failed with exit code 1
