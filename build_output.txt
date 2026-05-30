@@ -7,9 +7,27 @@ Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
 Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-lib/data/models/models.dart:290:35: Error: Type 'DocumentSnapshot' not found.
+lib/presentation/screens/onboarding/onboarding_screen.dart:23:3: Error: Type 'NivelUsuario' not found.
+  NivelUsuario _nivel = NivelUsuario.iniciante;
+  ^^^^^^^^^^^^
+lib/presentation/screens/onboarding/onboarding_screen.dart:228:9: Error: Type 'NivelUsuario' not found.
+  final NivelUsuario nivelActual;
+        ^^^^^^^^^^^^
+lib/presentation/screens/onboarding/onboarding_screen.dart:229:22: Error: Type 'NivelUsuario' not found.
+  final ValueChanged<NivelUsuario> onNivel;
+                     ^^^^^^^^^^^^
+lib/data/models/models.dart:289:35: Error: Type 'DocumentSnapshot' not found.
   factory InvitacionModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
                                   ^^^^^^^^^^^^^^^^
+lib/presentation/screens/onboarding/onboarding_screen.dart:233:13: Error: Undefined name 'NivelUsuario'.
+    (nivel: NivelUsuario.iniciante, emoji: '🟢', label: 'Principiante',
+            ^^^^^^^^^^^^
+lib/presentation/screens/onboarding/onboarding_screen.dart:235:13: Error: Undefined name 'NivelUsuario'.
+    (nivel: NivelUsuario.intermedio,   emoji: '🟡', label: 'Intermedio',
+            ^^^^^^^^^^^^
+lib/presentation/screens/onboarding/onboarding_screen.dart:237:13: Error: Undefined name 'NivelUsuario'.
+    (nivel: NivelUsuario.avanzado,     emoji: '🔴', label: 'Avanzado',
+            ^^^^^^^^^^^^
 lib/data/datasources/remote/firestore_service.dart:25:20: Error: The getter 'AuthService' isn't defined for the class 'FirestoreService'.
  - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
 Try correcting the name to the name of an existing getter, or defining a getter or field named 'AuthService'.
@@ -20,21 +38,49 @@ lib/data/datasources/remote/firestore_service.dart:44:21: Error: The getter 'Aut
 Try correcting the name to the name of an existing getter, or defining a getter or field named 'AuthService'.
     final usuario = AuthService.instance.usuarioActual;
                     ^^^^^^^^^^^
-lib/data/models/models.dart:287:22: Error: The getter 'FieldValue' isn't defined for the class 'InvitacionModel'.
+lib/data/datasources/remote/firestore_service.dart:72:25: Error: The getter 'NivelUsuario' isn't defined for the class 'FirestoreService'.
+ - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'NivelUsuario'.
+      nivelExperiencia: NivelUsuario.values.firstWhere((e) => e.name == data['nivel_experiencia'], orElse: () => NivelUsuario.iniciante),
+                        ^^^^^^^^^^^^
+lib/data/datasources/remote/firestore_service.dart:72:114: Error: The getter 'NivelUsuario' isn't defined for the class 'FirestoreService'.
+ - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'NivelUsuario'.
+      nivelExperiencia: NivelUsuario.values.firstWhere((e) => e.name == data['nivel_experiencia'], orElse: () => NivelUsuario.iniciante),
+                                                                                          ^^^^^^^^^^^^
+lib/presentation/screens/onboarding/onboarding_screen.dart:23:3: Error: 'NivelUsuario' isn't a type.
+  NivelUsuario _nivel = NivelUsuario.iniciante;
+  ^^^^^^^^^^^^
+lib/presentation/screens/onboarding/onboarding_screen.dart:23:25: Error: Undefined name 'NivelUsuario'.
+  NivelUsuario _nivel = NivelUsuario.iniciante;
+                        ^^^^^^^^^^^^
+lib/presentation/screens/onboarding/onboarding_screen.dart:228:9: Error: 'NivelUsuario' isn't a type.
+  final NivelUsuario nivelActual;
+        ^^^^^^^^^^^^
+lib/presentation/screens/onboarding/onboarding_screen.dart:229:22: Error: 'NivelUsuario' isn't a type.
+  final ValueChanged<NivelUsuario> onNivel;
+                     ^^^^^^^^^^^^
+lib/data/models/models.dart:33:23: Error: Undefined name 'NivelUsuario'.
+    nivelExperiencia: NivelUsuario.values.firstWhere(
+                      ^^^^^^^^^^^^
+lib/data/models/models.dart:34:62: Error: Undefined name 'NivelUsuario'.
+      (e) => e.name == m['nivel_experiencia'], orElse: () => NivelUsuario.iniciante),
+                                                             ^^^^^^^^^^^^
+lib/data/models/models.dart:286:22: Error: The getter 'FieldValue' isn't defined for the class 'InvitacionModel'.
  - 'InvitacionModel' is from 'package:supready/data/models/models.dart' ('lib/data/models/models.dart').
 Try correcting the name to the name of an existing getter, or defining a getter or field named 'FieldValue'.
         'creado_en': FieldValue.serverTimestamp(),
                      ^^^^^^^^^^
-lib/data/models/models.dart:290:35: Error: 'DocumentSnapshot' isn't a type.
+lib/data/models/models.dart:289:35: Error: 'DocumentSnapshot' isn't a type.
   factory InvitacionModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
                                   ^^^^^^^^^^^^^^^^
-lib/data/models/models.dart:297:36: Error: 'Timestamp' isn't a type.
+lib/data/models/models.dart:296:36: Error: 'Timestamp' isn't a type.
       creadoEn: (d['creado_en'] as Timestamp).toDate(),
                                    ^^^^^^^^^
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
 Target kernel_snapshot failed: Exception
 
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
 
 FAILURE: Build failed with an exception.
 
@@ -48,6 +94,6 @@ Execution failed for task ':app:compileFlutterBuildDebug'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 34s
-Running Gradle task 'assembleDebug'...                            154.8s
+BUILD FAILED in 2m 52s
+Running Gradle task 'assembleDebug'...                            173.0s
 Gradle task assembleDebug failed with exit code 1
