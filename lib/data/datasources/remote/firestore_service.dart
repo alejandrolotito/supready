@@ -275,7 +275,7 @@ class FirestoreService {
         nombre: 'Demo',
         apellido: 'Usuario',
         avatarUrl: '',
-        nivelExperiencia: NivelUsuario.iniciante,
+        nivelExperiencia: NivelExperiencia.principiante,
       ));
     }
   }
