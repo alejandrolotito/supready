@@ -25,11 +25,10 @@ class AuthService {
       if (firebaseUser?.email != null) {
         // Refrescar token silenciosamente (no muestra pantalla)
         await firebaseUser!.reload();
-        _usuarioActual = await SupDatabase.instance
-            .getUsuarioByEmail(firebaseUser.email!);
-        if (_usuarioActual != null) {
-          return true;
-        }
+        _usuarioActual = await FirestoreService.instance._obtenerUsuarioPorId(firebaseUser.uid);
+      if (_usuarioActual != null) {
+        return true;
+      }  }
         // Usuario en Firebase pero no en SQLite local → reconstruir
         final partes = (firebaseUser.displayName ?? 'Usuario').split(' ');
         final usuario = UsuarioModel(
