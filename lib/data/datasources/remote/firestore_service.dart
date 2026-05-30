@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'auth_service.dart';
 import '../../models/models.dart';
 
 
@@ -69,7 +70,7 @@ class FirestoreService {
       email: data['email'] as String,
       googleId: uid,
       avatarUrl: data['avatar_url'] as String?,
-      nivelExperiencia: NivelUsuario.values.firstWhere((e) => e.name == data['nivel_experiencia'], orElse: () => NivelUsuario.iniciante),
+      nivelExperiencia: NivelExperiencia.values.firstWhere((e) => e.name == data['nivel_experiencia'], orElse: () => NivelExperiencia.principiante),
     );
   }
 

@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 // ============================================================
 // SUPReady v3 - Modelos de Datos
 // ============================================================
 
 enum NivelExperiencia { principiante, intermedio, avanzado }
+
 enum SupReadyIndex { verde, amarillo, rojo, sinDatos }
 
 class UsuarioModel {
@@ -27,11 +29,12 @@ class UsuarioModel {
 
   factory UsuarioModel.fromMap(Map<String, dynamic> m) => UsuarioModel(
     usuarioId: m['usuario_id'] as int?,
-    nombre: m['nombre'] as String, apellido: m['apellido'] as String,
-    email: m['email'] as String, googleId: m['google_id'] as String?,
+    nombre: m['nombre'] as String,
+    apellido: m['apellido'] as String,
+    email: m['email'] as String,
+    googleId: m['google_id'] as String?,
     avatarUrl: m['avatar_url'] as String?,
-    nivelExperiencia: NivelUsuario.values.firstWhere(
-      (e) => e.name == m['nivel_experiencia'], orElse: () => NivelUsuario.iniciante),
+    nivelExperiencia: NivelExperiencia.values.firstWhere((e) => e.name == m['nivel_experiencia'], orElse: () => NivelExperiencia.principiante),
   );
 }
 
