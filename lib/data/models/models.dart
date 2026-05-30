@@ -264,6 +264,43 @@ class ParticipanteSalida {
   });
 }
 
+// ─── INVITACIÓN SALIDA ──────────────────────────────────────
+class InvitacionModel {
+  final String invitacionId; // Firestore doc ID
+  final String salidaId; // Firestore salida doc ID
+  final String emisorId; // UID of who sent the invitation (organizador)
+  final String destinatarioId; // UID of invited user
+  final DateTime creadoEn;
+
+  const InvitacionModel({
+    required this.invitacionId,
+    required this.salidaId,
+    required this.emisorId,
+    required this.destinatarioId,
+    required this.creadoEn,
+  });
+
+  Map<String, dynamic> toMap() => {
+        'salida_id': salidaId,
+        'emisor_id': emisorId,
+        'destinatario_id': destinatarioId,
+        'creado_en': FieldValue.serverTimestamp(),
+      };
+
+  factory InvitacionModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data()!;
+    return InvitacionModel(
+      invitacionId: doc.id,
+      salidaId: d['salida_id'] as String,
+      emisorId: d['emisor_id'] as String,
+      destinatarioId: d['destinatario_id'] as String,
+      creadoEn: (d['creado_en'] as Timestamp).toDate(),
+    );
+  }
+
+
+}
+
 extension SalidaGrupalExt on SalidaGrupal {
   SalidaGrupal copyWithParticipantes(List<ParticipanteSalida> participantes) =>
       SalidaGrupal(

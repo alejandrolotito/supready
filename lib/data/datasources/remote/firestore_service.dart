@@ -18,7 +18,61 @@ class FirestoreService {
 
   final _db = FirebaseFirestore.instance;
 
-  // ─── SALIDAS ──────────────────────────────────────────────
+  // ─── INVITACIONES ──────────────────────────────────────
+
+  /// Crear una invitación a una salida para un usuario por UID
+  Future<void> crearInvitacion({required String salidaId, required String destinatarioId}) async {
+    final emisor = AuthService.instance.usuarioActual;
+    if (emisor == null) return;
+    final invitacion = {
+      'salida_id': salidaId,
+      'emisor_id': emisor.googleId ?? emisor.usuarioId.toString(),
+      'destinatario_id': destinatarioId,
+      'creado_en': FieldValue.serverTimestamp(),
+    };
+    await _db.collection('invitaciones').add(invitacion);
+    // TODO: enviar notificación push real vía FCM
+    print('Push notification placeholder: invitación enviada a $destinatarioId');
+  }
+
+  /// Aceptar una invitación: se agrega al participante y se elimina la invitación
+  Future<void> aceptarInvitacion(String invitacionId) async {
+    final doc = await _db.collection('invitaciones').doc(invitacionId).get();
+    if (!doc.exists) return;
+    final data = doc.data()!;
+    final salidaId = data['salida_id'] as String;
+    final usuario = AuthService.instance.usuarioActual;
+    if (usuario == null) return;
+    // añadir participante a la salida
+    await anotarseEnSalida(salidaId, usuario);
+    // eliminar la invitación
+    await _db.collection('invitaciones').doc(invitacionId).delete();
+  }
+
+  /// Stream de invitaciones pendientes para un usuario (UID)
+  Stream<List<InvitacionModel>> streamInvitacionesParaUsuario(String uid) {
+    return _db.collection('invitaciones')
+        .where('destinatario_id', isEqualTo: uid)
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => InvitacionModel.fromDoc(d)).toList());
+  }
+
+  /// Helper: obtener perfil de usuario por UID (solo los campos necesarios)
+  Future<UsuarioModel?> _obtenerUsuarioPorId(String uid) async {
+    final snap = await _db.collection('usuarios').doc(uid).get();
+    if (!snap.exists) return null;
+    final data = snap.data()!;
+    return UsuarioModel(
+      usuarioId: int.tryParse(uid) ?? 0,
+      nombre: data['nombre'] as String,
+      apellido: data['apellido'] as String,
+      email: data['email'] as String,
+      googleId: uid,
+      avatarUrl: data['avatar_url'] as String?,
+      nivelExperiencia: NivelUsuario.values.firstWhere((e) => e.name == data['nivel_experiencia'], orElse: () => NivelUsuario.iniciante),
+    );
+  }
+
 
   /// Crear salida → devuelve el ID generado por Firestore
   Future<String> crearSalida(SalidaGrupal salida, String autorNombre) async {
