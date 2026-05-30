@@ -27,9 +27,9 @@ class AuthService {
         // Refresh token silently (no UI)
         await firebaseUser!.reload();
 
-        // Try to fetch the user profile from Firestore
-        _usuarioActual = await FirestoreService.instance
-            ._obtenerUsuarioPorId(firebaseUser.uid);
+        // Load user from local SQLite
+        _usuarioActual = await SupDatabase.instance
+            .getUsuarioByEmail(firebaseUser.email!);
 
         if (_usuarioActual != null) {
           return true;
