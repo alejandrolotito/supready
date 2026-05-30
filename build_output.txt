@@ -104,10 +104,10 @@ lib/presentation/screens/onboarding/onboarding_screen.dart:154:47: Error: The me
 Try correcting the name to the name of an existing method, or defining a method named 'signInConGoogle'.
     final result = await AuthService.instance.signInConGoogle();
                                               ^^^^^^^^^^^^^^^
-Target kernel_snapshot failed: Exception
-
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
+Target kernel_snapshot failed: Exception
+
 
 FAILURE: Build failed with an exception.
 
@@ -121,6 +121,6 @@ Execution failed for task ':app:compileFlutterBuildDebug'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 45s
-Running Gradle task 'assembleDebug'...                            165.7s
+BUILD FAILED in 2m 35s
+Running Gradle task 'assembleDebug'...                            155.8s
 Gradle task assembleDebug failed with exit code 1
