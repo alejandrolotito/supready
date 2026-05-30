@@ -3,33 +3,39 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/models.dart';
 import '../local/sup_database.dart';
+import 'firestore_service.dart';
 
 class AuthService {
   static final AuthService instance = AuthService._();
   AuthService._();
 
-  final _firebaseAuth = FirebaseAuth.instance;
-  final _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
 
   UsuarioModel? _usuarioActual;
   UsuarioModel? get usuarioActual => _usuarioActual;
   bool get estaAutenticado => _usuarioActual != null;
 
   // ─── Restaurar sesión al iniciar la app ─────────────────
-  // Firebase Auth persiste la sesión automáticamente entre reinicios.
-  // Solo necesitamos cargar el UsuarioModel local.
+  // Firebase Auth persists the session automatically between restarts.
+  // We just need to load the UsuarioModel locally.
   Future<bool> restaurarSesion() async {
     try {
-      // 1. Firebase ya tiene la sesión activa (token persistido)
+      // 1. Firebase already has an active session (persisted token)
       final firebaseUser = _firebaseAuth.currentUser;
       if (firebaseUser?.email != null) {
-        // Refrescar token silenciosamente (no muestra pantalla)
+        // Refresh token silently (no UI)
         await firebaseUser!.reload();
-        _usuarioActual = await FirestoreService.instance._obtenerUsuarioPorId(firebaseUser.uid);
-      if (_usuarioActual != null) {
-        return true;
-      }  }
-        // Usuario en Firebase pero no en SQLite local → reconstruir
+
+        // Try to fetch the user profile from Firestore
+        _usuarioActual = await FirestoreService.instance
+            ._obtenerUsuarioPorId(firebaseUser.uid);
+
+        if (_usuarioActual != null) {
+          return true;
+        }
+
+        // User exists in Firebase Auth but not in Firestore → rebuild locally
         final partes = (firebaseUser.displayName ?? 'Usuario').split(' ');
         final usuario = UsuarioModel(
           nombre: partes.first,
@@ -44,15 +50,16 @@ class AuthService {
         return _usuarioActual != null;
       }
 
-      // 2. Fallback: modo invitado guardado en SharedPreferences
+      // 2. Fallback: guest mode saved in SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final email = prefs.getString('last_email');
       if (email != null) {
-        _usuarioActual =
-            await SupDatabase.instance.getUsuarioByEmail(email);
+        _usuarioActual = await SupDatabase.instance.getUsuarioByEmail(email);
         return _usuarioActual != null;
       }
-    } catch (_) {}
+    } catch (_) {
+      // ignore errors, will return false
+    }
     return false;
   }
 
@@ -68,14 +75,14 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      final userCred =
-          await _firebaseAuth.signInWithCredential(credential);
+      final userCred = await _firebaseAuth.signInWithCredential(credential);
       final firebaseUser = userCred.user;
       if (firebaseUser == null) return AuthResult.error('Usuario nulo');
 
-      final partes =
-          (firebaseUser.displayName ?? googleUser.displayName ?? 'Usuario')
-              .split(' ');
+      final partes = (firebaseUser.displayName ??
+                googleUser.displayName ??
+                'Usuario')
+            .split(' ');
       final usuario = UsuarioModel(
         nombre: partes.first,
         apellido: partes.length > 1 ? partes.sublist(1).join(' ') : '',
@@ -84,11 +91,12 @@ class AuthService {
         avatarUrl: firebaseUser.photoURL ?? googleUser.photoUrl,
       );
 
+      // Persist locally
       await SupDatabase.instance.upsertUsuario(usuario);
       _usuarioActual = await SupDatabase.instance
           .getUsuarioByEmail(usuario.email);
 
-      // Guardar email para fallback
+      // Save email for fallback
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('last_email', usuario.email);
 
@@ -96,7 +104,7 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'sign_in_canceled') return AuthResult.cancelado();
       return AuthResult.error(e.message ?? e.code);
-    } on Exception catch (e) {
+    } catch (e) {
       final msg = e.toString();
       if (msg.contains('ApiException: 10') ||
           msg.contains('DEVELOPER_ERROR') ||
@@ -110,7 +118,10 @@ class AuthService {
   // ─── Modo invitado ───────────────────────────────────────
   Future<void> entrarComoInvitado(String nombre) async {
     final usuario = UsuarioModel(
-        nombre: nombre, apellido: '', email: 'invitado@supready.local');
+        nombre: nombre,
+        apellido: '',
+        email: 'invitado@supready.local',
+        googleId: null);
     await SupDatabase.instance.upsertUsuario(usuario);
     _usuarioActual = await SupDatabase.instance
         .getUsuarioByEmail('invitado@supready.local');
@@ -136,8 +147,11 @@ class AuthResult {
   final String? error;
 
   const AuthResult._({
-    required this.exitoso, required this.cancelado,
-    this.errorConfig = false, this.usuario, this.error,
+    required this.exitoso,
+    required this.cancelado,
+    this.errorConfig = false,
+    this.usuario,
+    this.error,
   });
 
   factory AuthResult.exitoso(UsuarioModel u) =>
