@@ -7,15 +7,15 @@ Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
 Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-lib/data/datasources/remote/auth_service.dart:32:14: Error: The method '_obtenerUsuarioPorId' isn't defined for the class 'FirestoreService'.
+lib/main.dart:50:29: Error: The method 'generarTablasIniciales' isn't defined for the class 'FirestoreService'.
  - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named '_obtenerUsuarioPorId'.
-            ._obtenerUsuarioPorId(firebaseUser.uid);
-             ^^^^^^^^^^^^^^^^^^^^
-Target kernel_snapshot failed: Exception
-
+Try correcting the name to the name of an existing method, or defining a method named 'generarTablasIniciales'.
+  FirestoreService.instance.generarTablasIniciales().catchError((e) {
+                            ^^^^^^^^^^^^^^^^^^^^^^
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
+Target kernel_snapshot failed: Exception
+
 
 FAILURE: Build failed with an exception.
 
@@ -29,6 +29,6 @@ Execution failed for task ':app:compileFlutterBuildDebug'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 3m 10s
-Running Gradle task 'assembleDebug'...                            190.9s
+BUILD FAILED in 2m 29s
+Running Gradle task 'assembleDebug'...                            150.3s
 Gradle task assembleDebug failed with exit code 1
