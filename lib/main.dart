@@ -46,11 +46,6 @@ void main() async {
     debugPrint("Error restaurando sesión: $e");
   }
 
-  // Inicializar tablas Firestore de forma asíncrona en segundo plano para no congelar el splash screen
-  FirestoreService.instance.generarTablasIniciales().catchError((e) {
-    debugPrint("Error al generar tablas Firestore iniciales: $e");
-  });
-
   TrackingState.instance;
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
