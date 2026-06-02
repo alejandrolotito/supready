@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -62,7 +63,7 @@ void main() async {
   final tieneSession = AuthService.instance.estaAutenticado;
   final initialRoute = (!onboardingDone && !tieneSession) ? '/onboarding' : '/home';
 
-  runApp(SupReadyApp(initialRoute: initialRoute));
+  runApp(ProviderScope(child: SupReadyApp(initialRoute: initialRoute)));
 }
 
 class SupReadyApp extends StatelessWidget {
