@@ -7,11 +7,30 @@ Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
 Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
 "Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
-lib/main.dart:50:29: Error: The method 'generarTablasIniciales' isn't defined for the class 'FirestoreService'.
+lib/presentation/screens/salidas/detalle_salida_screen.dart:14:36: Error: The method 'streamSalidaPorId' isn't defined for the class 'FirestoreService'.
  - 'FirestoreService' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
-Try correcting the name to the name of an existing method, or defining a method named 'generarTablasIniciales'.
-  FirestoreService.instance.generarTablasIniciales().catchError((e) {
-                            ^^^^^^^^^^^^^^^^^^^^^^
+Try correcting the name to the name of an existing method, or defining a method named 'streamSalidaPorId'.
+  return FirestoreService.instance.streamSalidaPorId(tripId);
+                                   ^^^^^^^^^^^^^^^^^
+lib/data/datasources/remote/firestore_service.dart:265:12: Error: The getter '_db' isn't defined for the class 'MensajeChat'.
+ - 'MensajeChat' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named '_db'.
+    return _db.collection('group_trips').doc(tripId).snapshots()
+           ^^^
+lib/data/datasources/remote/firestore_service.dart:272:37: Error: The getter '_db' isn't defined for the class 'MensajeChat'.
+ - 'MensajeChat' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named '_db'.
+              final userDoc = await _db.collection('users').doc(uid).get();
+                                    ^^^
+lib/data/datasources/remote/firestore_service.dart:285:18: Error: The method '_salidaFromDoc' isn't defined for the class 'MensajeChat'.
+ - 'MensajeChat' is from 'package:supready/data/datasources/remote/firestore_service.dart' ('lib/data/datasources/remote/firestore_service.dart').
+Try correcting the name to the name of an existing method, or defining a method named '_salidaFromDoc'.
+          return _salidaFromDoc(doc).copyWithParticipantes(participantes);
+                 ^^^^^^^^^^^^^^
+lib/data/datasources/local/tracking_service.dart:183:22: Error: Cannot invoke a non-'const' constructor where a const expression is expected.
+Try using a constructor or factory that is 'const'.
+    const settings = AndroidSettings(
+                     ^^^^^^^^^^^^^^^
 Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
 Target kernel_snapshot failed: Exception
@@ -29,6 +48,6 @@ Execution failed for task ':app:compileFlutterBuildDebug'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 2m 29s
-Running Gradle task 'assembleDebug'...                            150.3s
+BUILD FAILED in 2m 33s
+Running Gradle task 'assembleDebug'...                            154.4s
 Gradle task assembleDebug failed with exit code 1
