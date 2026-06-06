@@ -4,15 +4,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../models/models.dart';
 import 'sup_database.dart';
 
 // ============================================================
-// SUPReady v2.0 - Tracking conforme a specs
-// - distanceFilter: 2m (spec: anti-líneas-rectas)
-// - AndroidSettings interval: 3s
-// - Buffer de 10 puntos → WriteBatch a Firestore
-// - Foreground Service para background GPS
+// SUPReady v2.1 - Tracking con pantalla apagada
+//
+// SOLUCIÓN pantalla apagada:
+//   1. WakelockPlus.enable() al iniciar → CPU activa aunque
+//      la pantalla se apague (no drena más batería de lo normal)
+//   2. ForegroundService con allowWakeLock: true → Android no
+//      mata el proceso GPS en background
+//   3. AndroidSettings.distanceFilter: 2m + interval 3s (spec)
+//   4. WriteBatch Firestore cada 10 puntos GPS
 // ============================================================
 
 enum EstadoTracking { inactivo, activo, finalizado }
@@ -32,10 +37,10 @@ class TrackingService with WidgetsBindingObserver {
   DateTime? _backgroundAt;
   bool _enBackground = false;
 
-  // Cloud sync
+  // Firestore cloud sync
   String? _firestoreSessionId;
   String? _firestoreUserId;
-  final List<Map<String, dynamic>> _bufferPoints = []; // Buffer 10 puntos
+  final List<Map<String, dynamic>> _bufferPoints = [];
   final _firestore = FirebaseFirestore.instance;
 
   final _estadoCtrl   = StreamController<EstadoTracking>.broadcast();
@@ -53,18 +58,21 @@ class TrackingService with WidgetsBindingObserver {
 
   bool get activo => _estado == EstadoTracking.activo;
 
-  // ─── Lifecycle ──────────────────────────────────────────
+  // ─── Lifecycle: pausa SOS en background ─────────────────
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!activo) return;
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       _enBackground = true;
       _backgroundAt = DateTime.now();
       _sosTimer?.cancel();
+      // GPS sigue corriendo — WakeLock mantiene CPU activa
     } else if (state == AppLifecycleState.resumed && _enBackground) {
       _enBackground = false;
       if (_backgroundAt != null && _ultimaVariacion != null) {
-        _ultimaVariacion = _ultimaVariacion!.add(DateTime.now().difference(_backgroundAt!));
+        _ultimaVariacion = _ultimaVariacion!
+            .add(DateTime.now().difference(_backgroundAt!));
       }
       _backgroundAt = null;
       if (activo) _iniciarSOS();
@@ -78,6 +86,11 @@ class TrackingService with WidgetsBindingObserver {
     String? firestoreUserId,
   }) async {
     if (!await _checkPermisos()) return false;
+
+    // WakeLock: mantiene CPU activa con pantalla apagada
+    await WakelockPlus.enable();
+
+    // Foreground Service: Android no puede matar el proceso
     await _iniciarForegroundService();
 
     _usuarioId = usuarioId; _spotId = spotId;
@@ -94,7 +107,7 @@ class TrackingService with WidgetsBindingObserver {
         usuarioId: usuarioId, spotId: spotId, iniciadaEn: _inicio!);
     _rutaId = await SupDatabase.instance.insertarRuta(ruta);
 
-    // Firestore session si hay usuario autenticado
+    // Firestore session (si hay usuario autenticado)
     if (_firestoreUserId != null) {
       final sessionRef = _firestore
           .collection('users').doc(_firestoreUserId)
@@ -118,15 +131,22 @@ class TrackingService with WidgetsBindingObserver {
   Future<RutaTrazadaModel?> finalizarTracking() async {
     if (_rutaId == null || !activo) return null;
     _gpsSub?.cancel(); _sosTimer?.cancel(); _notifTimer?.cancel();
+
+    // Liberar WakeLock y detener Foreground Service
+    await WakelockPlus.disable();
     await FlutterForegroundTask.stopService();
+
     _estado = EstadoTracking.finalizado;
 
-    // Flush buffer restante
-    if (_bufferPoints.isNotEmpty && _firestoreUserId != null && _firestoreSessionId != null) {
+    // Flush buffer GPS restante a Firestore
+    if (_bufferPoints.isNotEmpty &&
+        _firestoreUserId != null &&
+        _firestoreSessionId != null) {
       await _flushBuffer();
     }
 
-    final dur = _inicio != null ? DateTime.now().difference(_inicio!).inMinutes : 0;
+    final dur = _inicio != null
+        ? DateTime.now().difference(_inicio!).inMinutes : 0;
     final velMedia = dur > 0 ? _distanciaKm / (dur / 60) : 0.0;
 
     final ruta = RutaTrazadaModel(
@@ -137,12 +157,14 @@ class TrackingService with WidgetsBindingObserver {
     );
     await SupDatabase.instance.actualizarRuta(ruta);
 
-    // Cerrar sesión en Firestore
+    // Cerrar sesión Firestore
     if (_firestoreUserId != null && _firestoreSessionId != null) {
-      await _firestore
-          .collection('users').doc(_firestoreUserId)
-          .collection('sessions').doc(_firestoreSessionId)
-          .update({'endTime': FieldValue.serverTimestamp(), 'status': 'completed'});
+      try {
+        await _firestore
+            .collection('users').doc(_firestoreUserId)
+            .collection('sessions').doc(_firestoreSessionId)
+            .update({'endTime': FieldValue.serverTimestamp(), 'status': 'completed'});
+      } catch (_) {}
     }
 
     _estadoCtrl.add(_estado);
@@ -156,13 +178,12 @@ class TrackingService with WidgetsBindingObserver {
     _iniciarSOS();
   }
 
-  // ─── GPS con specs anti-líneas-rectas ───────────────────
+  // ─── GPS — spec: 2m / 3s anti-líneas-rectas ─────────────
   void _iniciarGPS() {
-    // Spec: distanceFilter 2m + interval 3s (AndroidSettings)
-    final settings = AndroidSettings(
+    const settings = AndroidSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 2,       // 2 metros obligatorios (spec)
-      intervalDuration: const Duration(seconds: 3), // 3 segundos (spec)
+      distanceFilter: 2,                           // 2m obligatorio (spec)
+      intervalDuration: Duration(seconds: 3),      // 3s (spec)
     );
     _gpsSub = Geolocator.getPositionStream(locationSettings: settings)
         .listen(_procesarPos);
@@ -175,7 +196,8 @@ class TrackingService with WidgetsBindingObserver {
     if (velKmh > _velMax) _velMax = velKmh;
 
     if (_ultimaPos != null) {
-      final dist = _haversine(_ultimaPos!.latitude, _ultimaPos!.longitude,
+      final dist = _haversine(
+          _ultimaPos!.latitude, _ultimaPos!.longitude,
           pos.latitude, pos.longitude);
       if (dist > 0.002) {
         _distanciaKm += dist;
@@ -191,18 +213,19 @@ class TrackingService with WidgetsBindingObserver {
     await SupDatabase.instance.insertarCoordenada(coord);
     _coordCtrl.add(coord);
 
-    // Buffer para Firestore (spec: flush cada 10 puntos)
+    // Buffer → WriteBatch Firestore cada 10 puntos (spec)
     if (_firestoreUserId != null && _firestoreSessionId != null) {
       _bufferPoints.add({
-        'latitude': pos.latitude,
+        'latitude':  pos.latitude,
         'longitude': pos.longitude,
-        'speed': pos.speed,
+        'speed':     pos.speed,
         'timestamp': Timestamp.fromDate(DateTime.now()),
       });
       if (_bufferPoints.length >= 10) await _flushBuffer();
     }
 
-    final dur = _inicio != null ? DateTime.now().difference(_inicio!).inMinutes : 0;
+    final dur = _inicio != null
+        ? DateTime.now().difference(_inicio!).inMinutes : 0;
     _metricasCtrl.add(MetricasTracking(
       distanciaKm: _distanciaKm, velocidadActualKmh: velKmh,
       velocidadMaximaKmh: _velMax, duracionMinutos: dur,
@@ -211,21 +234,18 @@ class TrackingService with WidgetsBindingObserver {
     _ultimaPos = pos;
   }
 
-  // WriteBatch flush — spec: bajo consumo de red
   Future<void> _flushBuffer() async {
-    if (_bufferPoints.isEmpty || _firestoreUserId == null || _firestoreSessionId == null) return;
+    if (_bufferPoints.isEmpty ||
+        _firestoreUserId == null ||
+        _firestoreSessionId == null) return;
     final toSend = List<Map<String, dynamic>>.from(_bufferPoints);
     _bufferPoints.clear();
-
     final batch = _firestore.batch();
-    final pointsRef = _firestore
+    final ref = _firestore
         .collection('users').doc(_firestoreUserId)
         .collection('sessions').doc(_firestoreSessionId)
         .collection('points');
-
-    for (final p in toSend) {
-      batch.set(pointsRef.doc(), p);
-    }
+    for (final p in toSend) { batch.set(ref.doc(), p); }
     await batch.commit();
   }
 
@@ -234,7 +254,7 @@ class TrackingService with WidgetsBindingObserver {
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'supready_tracking',
         channelName: 'SUPReady — Remada activa',
-        channelDescription: 'GPS activo durante la remada.',
+        channelDescription: 'GPS activo. La pantalla puede apagarse.',
         channelImportance: NotificationChannelImportance.LOW,
         priority: NotificationPriority.LOW,
       ),
@@ -244,14 +264,14 @@ class TrackingService with WidgetsBindingObserver {
         eventAction: ForegroundTaskEventAction.repeat(5000),
         autoRunOnBoot: false,
         autoRunOnMyPackageReplaced: false,
-        allowWakeLock: true,
-        allowWifiLock: true,
+        allowWakeLock: true,   // CPU activa en background
+        allowWifiLock: true,   // WiFi activo para Firestore sync
       ),
     );
     await FlutterForegroundTask.startService(
       serviceId: 1001,
       notificationTitle: '🏄 Remada en curso',
-      notificationText: 'GPS activo — 0.00 km',
+      notificationText: 'GPS activo — podés apagar la pantalla',
       callback: _foregroundCallback,
     );
   }
@@ -259,17 +279,17 @@ class TrackingService with WidgetsBindingObserver {
   void _iniciarActualizacionNotif() {
     _notifTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!activo) return;
+      final dur = _inicio != null
+          ? DateTime.now().difference(_inicio!).inMinutes : 0;
+      final h = dur ~/ 60; final m = dur % 60;
+      final durStr = h > 0 ? '${h}h ${m}m' : '${m}m';
       FlutterForegroundTask.updateService(
-        notificationTitle: '🏄 Remada en curso',
-        notificationText: '${_distanciaKm.toStringAsFixed(2)} km · ${_durStr()}',
+        notificationTitle: '🏄 Remada en curso — podés apagar la pantalla',
+        notificationText:
+            '${_distanciaKm.toStringAsFixed(2)} km · $durStr · '
+            '${(_distanciaKm > 0 && dur > 0 ? _distanciaKm / (dur / 60) : 0).toStringAsFixed(1)} km/h',
       );
     });
-  }
-
-  String _durStr() {
-    if (_inicio == null) return '0m';
-    final min = DateTime.now().difference(_inicio!).inMinutes;
-    return min >= 60 ? '${min ~/ 60}h ${min % 60}m' : '${min}m';
   }
 
   void _iniciarSOS() {
@@ -284,7 +304,7 @@ class TrackingService with WidgetsBindingObserver {
 
   double _haversine(double lat1, double lon1, double lat2, double lon2) {
     const R = 6371.0;
-    final dLat = _rad(lat2 - lat1), dLon = _rad(lon2 - lon1);
+    final dLat = _rad(lat2 - lat1); final dLon = _rad(lon2 - lon1);
     final a = sin(dLat/2)*sin(dLat/2) +
         cos(_rad(lat1))*cos(_rad(lat2))*sin(dLon/2)*sin(dLon/2);
     return R * 2 * atan2(sqrt(a), sqrt(1-a));
@@ -295,8 +315,11 @@ class TrackingService with WidgetsBindingObserver {
   Future<bool> _checkPermisos() async {
     if (!await Geolocator.isLocationServiceEnabled()) return false;
     var p = await Geolocator.checkPermission();
-    if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
-    return p != LocationPermission.denied && p != LocationPermission.deniedForever;
+    if (p == LocationPermission.denied) {
+      p = await Geolocator.requestPermission();
+    }
+    return p != LocationPermission.denied &&
+        p != LocationPermission.deniedForever;
   }
 }
 
@@ -323,7 +346,7 @@ class MetricasTracking {
   String get distanciaFormateada => '${distanciaKm.toStringAsFixed(2)} km';
   String get velocidadFormateada => '${velocidadActualKmh.toStringAsFixed(1)} km/h';
   String get duracionFormateada {
-    final h = duracionMinutos ~/ 60, m = duracionMinutos % 60;
+    final h = duracionMinutos ~/ 60; final m = duracionMinutos % 60;
     return h > 0 ? '${h}h ${m}m' : '${m}m';
   }
 }
