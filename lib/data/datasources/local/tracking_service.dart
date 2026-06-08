@@ -180,7 +180,7 @@ class TrackingService with WidgetsBindingObserver {
 
   // ─── GPS — spec: 2m / 3s anti-líneas-rectas ─────────────
   void _iniciarGPS() {
-    const settings = AndroidSettings(
+    final settings = AndroidSettings(
       accuracy: LocationAccuracy.high,
       distanceFilter: 2,                           // 2m obligatorio (spec)
       intervalDuration: Duration(seconds: 3),      // 3s (spec)

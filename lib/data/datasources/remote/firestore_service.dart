@@ -207,6 +207,31 @@ class FirestoreService {
       'timestamp':  FieldValue.serverTimestamp(),
     });
   }
+
+  /// Stream de una salida específica con participantes en tiempo real
+  Stream<SalidaGrupal?> streamSalidaPorId(String tripId) {
+    return _db.collection('group_trips').doc(tripId).snapshots()
+        .asyncMap((doc) async {
+          if (!doc.exists) return null;
+          final attendees = (doc.data()?['attendees'] as List?)?.cast<String>() ?? [];
+          final participantes = await Future.wait(attendees.map((uid) async {
+            try {
+              final userDoc = await _db.collection('users').doc(uid).get();
+              return ParticipanteSalida(
+                usuarioId: 0,
+                nombre: userDoc.data()?['name'] as String? ?? uid,
+                avatarUrl: userDoc.data()?['photoUrl'] as String?,
+                estado: EstadoParticipante.confirmado,
+              );
+            } catch (_) {
+              return ParticipanteSalida(
+                  usuarioId: 0, nombre: uid,
+                  estado: EstadoParticipante.confirmado);
+            }
+          }));
+          return _salidaFromDoc(doc).copyWithParticipantes(participantes);
+        });
+  }
 }
 
 // ─── DTOs ─────────────────────────────────────────────────────
@@ -260,30 +285,4 @@ class MensajeChat {
     required this.id, required this.autorId, required this.autorNombre,
     required this.texto, this.avatarUrl, required this.timestamp,
   });
-  /// Stream de una salida específica con participantes en tiempo real
-  Stream<SalidaGrupal?> streamSalidaPorId(String tripId) {
-    return _db.collection('group_trips').doc(tripId).snapshots()
-        .asyncMap((doc) async {
-          if (!doc.exists) return null;
-          final data = doc.data()!;
-          final attendees = (data['attendees'] as List?)?.cast<String>() ?? [];
-          final participantes = await Future.wait(attendees.map((uid) async {
-            try {
-              final userDoc = await _db.collection('users').doc(uid).get();
-              return ParticipanteSalida(
-                usuarioId: 0,
-                nombre: userDoc.data()?['name'] as String? ?? uid,
-                avatarUrl: userDoc.data()?['photoUrl'] as String?,
-                estado: EstadoParticipante.confirmado,
-              );
-            } catch (_) {
-              return ParticipanteSalida(
-                  usuarioId: 0, nombre: uid,
-                  estado: EstadoParticipante.confirmado);
-            }
-          }));
-          return _salidaFromDoc(doc).copyWithParticipantes(participantes);
-        });
-  }
-
 }
