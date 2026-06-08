@@ -1,7 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 0db7ef564c1e5b22065d0c91e2517fa88b1db45f
     function isAuthenticated() { return request.auth != null; }
     function isOwner(userId) { return request.auth.uid == userId; }
 
@@ -24,17 +28,28 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && (
+<<<<<<< HEAD
         resource.data.createdBy == request.auth.uid || 
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentConditions'])
+=======
+        resource.data.createdBy == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['currentConditions'])
+>>>>>>> 0db7ef564c1e5b22065d0c91e2517fa88b1db45f
       );
       allow delete: if false;
     }
 
+<<<<<<< HEAD
     // Salidas Grupales y Chat Protegido por Array de Inscriptos
+=======
+    // Salidas Grupales y Chat protegido por attendees[]
+>>>>>>> 0db7ef564c1e5b22065d0c91e2517fa88b1db45f
     match /group_trips/{tripId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && (
+<<<<<<< HEAD
         resource.data.organizerId == request.auth.uid || 
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendees'])
       );
@@ -45,6 +60,23 @@ service cloud.firestore {
         allow read, create: if isAuthenticated() 
                             && request.auth.uid in get(/databases/$(database)/documents/group_trips/tripId).data.attendees
                             && get(/databases/$(database)/documents/group_trips/tripId).data.status != 'completed';
+=======
+        resource.data.organizerId == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['attendees'])
+      );
+      allow delete: if isAuthenticated()
+                    && resource.data.organizerId == request.auth.uid;
+
+      // Chat: solo attendees de la salida activa
+      match /messages/{messageId} {
+        allow read, create: if isAuthenticated()
+            && request.auth.uid in
+               get(/databases/$(database)/documents/group_trips/$(tripId))
+               .data.attendees
+            && get(/databases/$(database)/documents/group_trips/$(tripId))
+               .data.status != 'completed';
+>>>>>>> 0db7ef564c1e5b22065d0c91e2517fa88b1db45f
         allow update, delete: if false;
       }
     }

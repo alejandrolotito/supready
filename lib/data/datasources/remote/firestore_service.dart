@@ -2,15 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'auth_service.dart';
 import '../../models/models.dart';
 
-
 // ============================================================
-// SUPReady - Firestore Service (multiusuario en tiempo real)
-// Colecciones:
-//   /salidas          → salidas grupales públicas
-//   /salidas/{id}/participantes → sub-colección
-//   /salidas/{id}/mensajes      → chat en tiempo real
-//   /usuarios/{uid}             → perfiles públicos
-// Rutas GPS siguen en SQLite local (privadas por usuario)
+// SUPReady v2.0 - Firestore Service (spec-compliant)
+// Schema:
+//   /users/{uid}                    → perfil + favoriteSpotId
+//   /users/{uid}/sessions/{id}      → remadas (tracking cloud)
+//   /users/{uid}/sessions/{id}/points → GPS points (WriteBatch)
+//   /spots/{spotId}                 → spots públicos + currentConditions
+//   /group_trips/{tripId}           → salidas grupales (spec: group_trips)
+//   /group_trips/{tripId}/messages  → chat (solo attendees)
 // ============================================================
 
 class FirestoreService {
@@ -19,280 +19,271 @@ class FirestoreService {
 
   final _db = FirebaseFirestore.instance;
 
-  // ─── INVITACIONES ──────────────────────────────────────
+  // ─── USUARIOS ─────────────────────────────────────────────
 
-  /// Crear una invitación a una salida para un usuario por UID
-  Future<void> crearInvitacion({required String salidaId, required String destinatarioId}) async {
-    final emisor = AuthService.instance.usuarioActual;
-    if (emisor == null) return;
-    final invitacion = {
-      'salida_id': salidaId,
-      'emisor_id': emisor.googleId ?? emisor.usuarioId.toString(),
-      'destinatario_id': destinatarioId,
-      'creado_en': FieldValue.serverTimestamp(),
-    };
-    await _db.collection('invitaciones').add(invitacion);
-    // TODO: enviar notificación push real vía FCM
-    print('Push notification placeholder: invitación enviada a $destinatarioId');
+  Future<void> upsertPerfil(UsuarioModel u) async {
+    final id = u.googleId ?? u.email;
+    await _db.collection('users').doc(id).set({
+      'name':     u.nombre,
+      'email':    u.email,
+      'photoUrl': u.avatarUrl,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
-  /// Aceptar una invitación: se agrega al participante y se elimina la invitación
-  Future<void> aceptarInvitacion(String invitacionId) async {
-    final doc = await _db.collection('invitaciones').doc(invitacionId).get();
-    if (!doc.exists) return;
-    final data = doc.data()!;
-    final salidaId = data['salida_id'] as String;
-    final usuario = AuthService.instance.usuarioActual;
-    if (usuario == null) return;
-    // añadir participante a la salida
-    await anotarseEnSalida(salidaId, usuario);
-    // eliminar la invitación
-    await _db.collection('invitaciones').doc(invitacionId).delete();
+  Future<void> setFavoriteSpot(String uid, String spotId) async {
+    await _db.collection('users').doc(uid).update({'favoriteSpotId': spotId});
   }
 
-  /// Stream de invitaciones pendientes para un usuario (UID)
-  Stream<List<InvitacionModel>> streamInvitacionesParaUsuario(String uid) {
-    return _db.collection('invitaciones')
-        .where('destinatario_id', isEqualTo: uid)
-        .snapshots()
-        .map((snap) => snap.docs.map((d) => InvitacionModel.fromDoc(d)).toList());
+  Stream<Map<String, dynamic>?> streamUserProfile(String uid) {
+    return _db.collection('users').doc(uid).snapshots()
+        .map((d) => d.data());
   }
 
-  /// Helper: obtener perfil de usuario por UID (solo los campos necesarios)
-  Future<UsuarioModel?> _obtenerUsuarioPorId(String uid) async {
-    final snap = await _db.collection('usuarios').doc(uid).get();
-    if (!snap.exists) return null;
-    final data = snap.data()!;
-    return UsuarioModel(
-      usuarioId: int.tryParse(uid) ?? 0,
-      nombre: data['nombre'] as String,
-      apellido: data['apellido'] as String,
-      email: data['email'] as String,
-      googleId: uid,
-      avatarUrl: data['avatar_url'] as String?,
-      nivelExperiencia: NivelExperiencia.values.firstWhere((e) => e.name == data['nivel_experiencia'], orElse: () => NivelExperiencia.principiante),
-    );
-  }
+  // ─── SPOTS ────────────────────────────────────────────────
 
-
-  /// Crear salida → devuelve el ID generado por Firestore
-  Future<String> crearSalida(SalidaGrupal salida, String autorNombre) async {
-    final doc = await _db.collection('salidas').add({
-      'organizadorId':  salida.organizadorId.toString(),
-      'organizadorNombre': autorNombre,
-      'spotId':         salida.spotId,
-      'spotNombre':     salida.spotNombre,
-      'fechaHora':      Timestamp.fromDate(salida.fechaHora),
-      'nivelMinimo':    salida.nivelMinimo.name,
-      'cuposMax':       salida.cuposMax,
-      'esPublica':      salida.esPublica,
-      'estado':         salida.estado.name,
-      'descripcion':    salida.descripcion,
-      'creadoEn':       FieldValue.serverTimestamp(),
+  Future<String> crearSpot({
+    required String nombre,
+    required double lat,
+    required double lng,
+    required String creadorId,
+  }) async {
+    final doc = await _db.collection('spots').add({
+      'name':      nombre,
+      'location':  GeoPoint(lat, lng),
+      'createdBy': creadorId,
+      'isPublic':  true,
+      'currentConditions': {
+        'temperature':      22.0,
+        'windSpeedKnots':   0.0,
+        'windDirectionStr': 'N',
+        'tideHeight':       0.0,
+        'tideTrend':        'ESTABLE',
+        'lastUpdated':      FieldValue.serverTimestamp(),
+      },
     });
     return doc.id;
   }
 
-  /// Stream de salidas públicas activas (tiempo real)
-  Stream<List<SalidaGrupal>> streamSalidasPublicas() {
-    return _db.collection('salidas')
+  Stream<List<SpotFirestore>> streamSpots() {
+    return _db.collection('spots')
+        .where('isPublic', isEqualTo: true)
         .snapshots()
-        .asyncMap((snap) async {
-          final salidas = <SalidaGrupal>[];
-          for (final doc in snap.docs) {
-            final data = doc.data();
-            final esPublica = data['esPublica'] as bool? ?? true;
-            final estado = data['estado'] as String? ?? 'abierta';
-            if (esPublica && (estado == 'abierta' || estado == 'enCurso')) {
-              final participantes = await _getParticipantes(doc.id);
-              salidas.add(_salidaFromDoc(doc, participantes));
-            }
-          }
-          // Ordenar localmente por fechaHora para evitar requerir un índice compuesto
-          salidas.sort((a, b) => a.fechaHora.compareTo(b.fechaHora));
-          return salidas;
-        });
+        .map((snap) => snap.docs.map(SpotFirestore.fromDoc).toList());
   }
 
-  /// Stream de salidas de un usuario (organizador o participante)
-  Stream<List<SalidaGrupal>> streamMisSalidas(String usuarioId) {
-    return _db.collection('salidas')
-        .snapshots()
-        .asyncMap((snap) async {
-          final salidas = <SalidaGrupal>[];
-          for (final doc in snap.docs) {
-            final data = doc.data();
-            final estado = data['estado'] as String? ?? 'abierta';
-            if (estado == 'cancelada') continue;
-            final participantes = await _getParticipantes(doc.id);
-            final esMio = data['organizadorId'] == usuarioId ||
-                participantes.any((p) => p.usuarioId.toString() == usuarioId);
-            if (esMio) {
-              salidas.add(_salidaFromDoc(doc, participantes));
-            }
-          }
-          // Ordenar localmente por fechaHora descendente
-          salidas.sort((a, b) => b.fechaHora.compareTo(a.fechaHora));
-          return salidas;
-        });
+  Stream<SpotFirestore?> streamSpot(String spotId) {
+    return _db.collection('spots').doc(spotId).snapshots()
+        .map((d) => d.exists ? SpotFirestore.fromDoc(d) : null);
   }
 
-  /// Anotarse a una salida
-  Future<void> anotarseEnSalida(String salidaId, UsuarioModel usuario) async {
-    await _db
-        .collection('salidas')
-        .doc(salidaId)
-        .collection('participantes')
-        .doc(usuario.googleId ?? usuario.usuarioId.toString())
-        .set({
-      'usuarioId':  usuario.googleId ?? usuario.usuarioId.toString(),
-      'nombre':     usuario.nombre,
-      'avatarUrl':  usuario.avatarUrl,
-      'estado':     'confirmado',
-      'anotadoEn':  FieldValue.serverTimestamp(),
+  Future<void> actualizarCondiciones(
+      String spotId, Map<String, dynamic> condiciones) async {
+    await _db.collection('spots').doc(spotId).update({
+      'currentConditions': {
+        ...condiciones,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }
     });
   }
 
-  /// Cancelar salida
-  Future<void> cancelarSalida(String salidaId) async {
-    await _db.collection('salidas').doc(salidaId)
-        .update({'estado': 'cancelada'});
+  // ─── GROUP TRIPS (spec: /group_trips) ────────────────────
+
+  Future<String> crearSalida(SalidaGrupal salida, String autorNombre) async {
+    final uid = AuthService.instance.usuarioActual?.googleId
+        ?? AuthService.instance.usuarioActual?.usuarioId.toString()
+        ?? '';
+    final doc = await _db.collection('group_trips').add({
+      'title':           salida.spotNombre,
+      'description':     salida.descripcion,
+      'organizerId':     uid,
+      'organizerName':   autorNombre,
+      'date':            Timestamp.fromDate(salida.fechaHora),
+      'maxParticipants': salida.cuposMax,
+      'status':          'open',
+      'attendees':       [uid],   // organizador es el primer attendee
+      'nivelMinimo':     salida.nivelMinimo.name,
+      'spotId':          salida.spotId,
+      'spotNombre':      salida.spotNombre,
+      'isPublic':        salida.esPublica,
+      'createdAt':       FieldValue.serverTimestamp(),
+    });
+    return doc.id;
   }
 
-  Future<List<ParticipanteSalida>> _getParticipantes(String salidaId) async {
-    final snap = await _db
-        .collection('salidas').doc(salidaId)
-        .collection('participantes').get();
-    return snap.docs.map((d) => ParticipanteSalida(
-      usuarioId: int.tryParse(d.data()['usuarioId']?.toString() ?? '0') ?? 0,
-      nombre: d.data()['nombre'] ?? '',
-      avatarUrl: d.data()['avatarUrl'],
-      estado: EstadoParticipante.values.firstWhere(
-          (e) => e.name == d.data()['estado'],
-          orElse: () => EstadoParticipante.confirmado),
-    )).toList();
+  Stream<List<SalidaGrupal>> streamSalidasPublicas() {
+    return _db.collection('group_trips')
+        .where('isPublic', isEqualTo: true)
+        .where('status', isEqualTo: 'open')
+        .orderBy('date')
+        .snapshots()
+        .map((snap) => snap.docs.map(_salidaFromDoc).toList());
   }
 
-  SalidaGrupal _salidaFromDoc(
-      DocumentSnapshot<Map<String, dynamic>> doc,
-      List<ParticipanteSalida> participantes) {
+  Stream<List<SalidaGrupal>> streamMisSalidas(String uid) {
+    // Salidas donde el usuario es attendee
+    return _db.collection('group_trips')
+        .where('attendees', arrayContains: uid)
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map(_salidaFromDoc).toList());
+  }
+
+  /// Anotarse: agrega uid al array attendees (Firestore arrayUnion)
+  Future<void> anotarseEnSalida(String tripId, UsuarioModel usuario) async {
+    final uid = usuario.googleId ?? usuario.usuarioId.toString();
+    await _db.collection('group_trips').doc(tripId).update({
+      'attendees': FieldValue.arrayUnion([uid]),
+    });
+    // También actualizar perfil público
+    await upsertPerfil(usuario);
+  }
+
+  Future<void> cancelarSalida(String tripId) async {
+    await _db.collection('group_trips').doc(tripId)
+        .update({'status': 'cancelled'});
+  }
+
+  SalidaGrupal _salidaFromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data()!;
+    final attendees = (d['attendees'] as List?)?.cast<String>() ?? [];
     return SalidaGrupal(
-      salidaId:    int.tryParse(doc.id.hashCode.toString()),
-      firestoreId: doc.id,
-      organizadorId: int.tryParse(d['organizadorId']?.toString() ?? '0') ?? 0,
-      spotId:      d['spotId'] as int? ?? 0,
-      spotNombre:  d['spotNombre'] as String? ?? '',
-      fechaHora:   (d['fechaHora'] as Timestamp).toDate(),
-      nivelMinimo: NivelSalida.values.firstWhere(
+      firestoreId:  doc.id,
+      organizadorId: 0,
+      spotId:       d['spotId'] as int? ?? 0,
+      spotNombre:   d['spotNombre'] as String? ?? d['title'] as String? ?? '',
+      fechaHora:    (d['date'] as Timestamp).toDate(),
+      nivelMinimo:  NivelSalida.values.firstWhere(
           (e) => e.name == d['nivelMinimo'],
           orElse: () => NivelSalida.todos),
-      cuposMax:    d['cuposMax'] as int? ?? 10,
-      esPublica:   d['esPublica'] as bool? ?? true,
-      estado:      EstadoSalida.values.firstWhere(
-          (e) => e.name == d['estado'],
-          orElse: () => EstadoSalida.abierta),
-      descripcion: d['descripcion'] as String? ?? '',
-      participantes: participantes,
+      cuposMax:     d['maxParticipants'] as int? ?? 10,
+      esPublica:    d['isPublic'] as bool? ?? true,
+      estado:       _estadoFromStatus(d['status'] as String? ?? 'open'),
+      descripcion:  d['description'] as String? ?? '',
+      participantes: attendees.map((uid) => ParticipanteSalida(
+        usuarioId: 0, nombre: uid,
+        estado: EstadoParticipante.confirmado,
+      )).toList(),
     );
   }
 
-  // ─── CHAT EN TIEMPO REAL ──────────────────────────────────
+  EstadoSalida _estadoFromStatus(String s) => const {
+    'open':      EstadoSalida.abierta,
+    'active':    EstadoSalida.enCurso,
+    'completed': EstadoSalida.finalizada,
+    'cancelled': EstadoSalida.cancelada,
+  }[s] ?? EstadoSalida.abierta;
 
-  /// Stream de mensajes de una salida (tiempo real)
-  Stream<List<MensajeChat>> streamMensajes(String salidaId) {
+  // ─── CHAT (solo attendees, spec: messages subcolección) ──
+
+  Stream<List<MensajeChat>> streamMensajes(String tripId) {
     return _db
-        .collection('salidas').doc(salidaId)
-        .collection('mensajes')
+        .collection('group_trips').doc(tripId)
+        .collection('messages')
         .orderBy('timestamp')
         .snapshots()
         .map((snap) => snap.docs.map((d) => MensajeChat(
-              id:        d.id,
-              autorId:   d.data()['autorId'] ?? '',
-              autorNombre: d.data()['autorNombre'] ?? '',
-              avatarUrl: d.data()['avatarUrl'],
-              texto:     d.data()['texto'] ?? '',
-              timestamp: (d.data()['timestamp'] as Timestamp?)?.toDate()
+              id:          d.id,
+              autorId:     d.data()['senderId'] ?? '',
+              autorNombre: d.data()['senderName'] ?? 'Palista',
+              avatarUrl:   d.data()['avatarUrl'],
+              texto:       d.data()['text'] ?? '',
+              timestamp:   (d.data()['timestamp'] as Timestamp?)?.toDate()
                   ?? DateTime.now(),
             )).toList());
   }
 
-  /// Enviar mensaje
-  Future<void> enviarMensaje(String salidaId, UsuarioModel autor, String texto) async {
+  Future<void> enviarMensaje(
+      String tripId, UsuarioModel autor, String texto) async {
+    final uid = autor.googleId ?? autor.usuarioId.toString();
     await _db
-        .collection('salidas').doc(salidaId)
-        .collection('mensajes')
+        .collection('group_trips').doc(tripId)
+        .collection('messages')
         .add({
-      'autorId':     autor.googleId ?? autor.usuarioId.toString(),
-      'autorNombre': autor.nombre,
-      'avatarUrl':   autor.avatarUrl,
-      'texto':       texto,
-      'timestamp':   FieldValue.serverTimestamp(),
+      'senderId':   uid,
+      'senderName': autor.nombre,
+      'avatarUrl':  autor.avatarUrl,
+      'text':       texto,
+      'timestamp':  FieldValue.serverTimestamp(),
     });
   }
+}
 
-  // ─── PERFIL PÚBLICO ───────────────────────────────────────
-  Future<void> upsertPerfil(UsuarioModel u) async {
-    final id = u.googleId ?? u.email;
-    await _db.collection('usuarios').doc(id).set({
-      'nombre':    u.nombre,
-      'apellido':  u.apellido,
-      'avatarUrl': u.avatarUrl,
-      'nivel':     u.nivelExperiencia.name,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-    }
-/// Genera colecciones y documentos iniciales si no existen
-  Future<void> generarTablasIniciales() async {
-    // Salidas: crear una salida de ejemplo si la colección está vacía
-    final salidasSnap = await _db.collection('salidas').limit(1).get();
-    if (salidasSnap.docs.isEmpty) {
-      await crearSalida(
-        SalidaGrupal(
-          salidaId: 0,
-          firestoreId: '',
-          organizadorId: 0,
-          spotId: 0,
-          spotNombre: 'Ejemplo Spot',
-          fechaHora: DateTime.now().add(const Duration(hours: 1)),
-          nivelMinimo: NivelSalida.todos,
-          cuposMax: 10,
-          esPublica: true,
-          estado: EstadoSalida.abierta,
-          descripcion: 'Salida de ejemplo creada automáticamente.',
-          participantes: [],
-        ),
-        'OrganizadorDemo',
-      );
-    }
+// ─── DTOs ─────────────────────────────────────────────────────
 
-    // Usuarios: crear un usuario de ejemplo si la colección está vacía
-    final usuariosSnap = await _db.collection('usuarios').limit(1).get();
-    if (usuariosSnap.docs.isEmpty) {
-      await upsertPerfil(UsuarioModel(
-        googleId: null,
-        usuarioId: 0,
-        email: 'demo@example.com',
-        nombre: 'Demo',
-        apellido: 'Usuario',
-        avatarUrl: '',
-        nivelExperiencia: NivelExperiencia.principiante,
-      ));
-    }
+class SpotFirestore {
+  final String id, name;
+  final GeoPoint location;
+  final double windSpeedKnots, temperature, tideHeight;
+  final String windDirectionStr, tideTrend;
+  final bool isPublic;
+  final String createdBy;
+
+  const SpotFirestore({
+    required this.id, required this.name, required this.location,
+    required this.windSpeedKnots, required this.temperature,
+    required this.tideHeight, required this.windDirectionStr,
+    required this.tideTrend, required this.isPublic,
+    required this.createdBy,
+  });
+
+  factory SpotFirestore.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data()!;
+    final wx = d['currentConditions'] as Map<String, dynamic>? ?? {};
+    return SpotFirestore(
+      id:               doc.id,
+      name:             d['name'] as String? ?? '',
+      location:         d['location'] as GeoPoint? ?? const GeoPoint(0, 0),
+      windSpeedKnots:   (wx['windSpeedKnots'] ?? 0.0).toDouble(),
+      temperature:      (wx['temperature'] ?? 0.0).toDouble(),
+      tideHeight:       (wx['tideHeight'] ?? 0.0).toDouble(),
+      windDirectionStr: wx['windDirectionStr'] as String? ?? 'N',
+      tideTrend:        wx['tideTrend'] as String? ?? 'ESTABLE',
+      isPublic:         d['isPublic'] as bool? ?? true,
+      createdBy:        d['createdBy'] as String? ?? '',
+    );
   }
 
-
-
-
+  /// SUP Ready Index según condiciones actuales
+  String get supReadyIndex {
+    if (windSpeedKnots > 15) return 'rojo';
+    if (windSpeedKnots >= 9)  return 'amarillo';
+    return 'verde';
+  }
 }
-// ─── DTO mensaje de chat ──────────────────────────────────────
+
 class MensajeChat {
   final String id, autorId, autorNombre, texto;
   final String? avatarUrl;
   final DateTime timestamp;
   const MensajeChat({
-    required this.id, required this.autorId,
-    required this.autorNombre, required this.texto,
-    this.avatarUrl, required this.timestamp,
+    required this.id, required this.autorId, required this.autorNombre,
+    required this.texto, this.avatarUrl, required this.timestamp,
   });
+  /// Stream de una salida específica con participantes en tiempo real
+  Stream<SalidaGrupal?> streamSalidaPorId(String tripId) {
+    return _db.collection('group_trips').doc(tripId).snapshots()
+        .asyncMap((doc) async {
+          if (!doc.exists) return null;
+          final data = doc.data()!;
+          final attendees = (data['attendees'] as List?)?.cast<String>() ?? [];
+          final participantes = await Future.wait(attendees.map((uid) async {
+            try {
+              final userDoc = await _db.collection('users').doc(uid).get();
+              return ParticipanteSalida(
+                usuarioId: 0,
+                nombre: userDoc.data()?['name'] as String? ?? uid,
+                avatarUrl: userDoc.data()?['photoUrl'] as String?,
+                estado: EstadoParticipante.confirmado,
+              );
+            } catch (_) {
+              return ParticipanteSalida(
+                  usuarioId: 0, nombre: uid,
+                  estado: EstadoParticipante.confirmado);
+            }
+          }));
+          return _salidaFromDoc(doc).copyWithParticipantes(participantes);
+        });
+  }
+
 }

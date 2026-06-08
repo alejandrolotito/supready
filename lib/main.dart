@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,11 +8,44 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
+<<<<<<< HEAD
   runApp(
     const ProviderScope(
       child: SupReadyApp(),
     ),
   );
+=======
+  // 2. Cargar preferencias locales rápido (sin esperar a la red)
+  final prefs = await SharedPreferences.getInstance();
+  final onboardingDone = prefs.getBool('onboarding_done') ?? false;
+
+  // 3. Restaurar sesión de forma segura y sin bloquear la pantalla de carga principal
+  try {
+    await AuthService.instance.restaurarSesion().timeout(
+      const Duration(seconds: 3),
+      onTimeout: () {
+        debugPrint("Timeout al restaurar sesión");
+        return false;
+      },
+    );
+  } catch (e) {
+    debugPrint("Error restaurando sesión: $e");
+  }
+
+  TrackingState.instance;
+
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarBrightness: Brightness.dark,
+    statusBarIconBrightness: Brightness.light,
+  ));
+
+  final tieneSession = AuthService.instance.estaAutenticado;
+  final initialRoute = (!onboardingDone && !tieneSession) ? '/onboarding' : '/home';
+
+  runApp(ProviderScope(child: SupReadyApp(initialRoute: initialRoute)));
+>>>>>>> 0db7ef564c1e5b22065d0c91e2517fa88b1db45f
 }
 
 class SupReadyApp extends StatelessWidget {
