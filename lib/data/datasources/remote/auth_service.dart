@@ -29,7 +29,7 @@ class AuthService {
 
         // Try to fetch the user profile from Firestore
         _usuarioActual = await FirestoreService.instance
-            ._obtenerUsuarioPorId(firebaseUser.uid);
+            .obtenerUsuarioPorId(firebaseUser.uid);
 
         if (_usuarioActual != null) {
           return true;
