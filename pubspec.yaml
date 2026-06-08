@@ -14,10 +14,7 @@ dependencies:
   flutter_bloc: ^8.1.4
   equatable: ^2.0.5
   flutter_riverpod: ^2.5.1
-<<<<<<< HEAD
-=======
   riverpod_annotation: ^2.3.5
->>>>>>> 0db7ef564c1e5b22065d0c91e2517fa88b1db45f
 
   # Navegación
   go_router: ^13.2.0
