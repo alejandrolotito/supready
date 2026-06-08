@@ -28,7 +28,7 @@ class FavoriteSpotHomeCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(spot.name.toUpperCase(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.black)),
+          Text(spot.name.toUpperCase(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
           const SizedBox(height: 12),
           Row(
             children: [

@@ -40,7 +40,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
     final locationSettings = AndroidSettings(
       accuracy: LocationAccuracy.high,
       distanceFilter: 2, // 2 metros obligatorios
-      interval: 3,       // 3 segundos estrictos
+      intervalDuration: const Duration(seconds: 3),
     );
 
     _gpsSubscription = Geolocator.getPositionStream(locationSettings: locationSettings).listen((Position position) {
