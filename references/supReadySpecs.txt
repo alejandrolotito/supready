@@ -1,0 +1,569 @@
+
+📑 DOCUMENTO DE ESPECIFICACIÓN TÉCNICA Y ARQUITECTURA
+Proyecto: supReady (v1.5 - Documento de Producción) Stack Tecnológico: Flutter + Firebase (Auth, Firestore) Patrón de Arquitectura: Feature-First (Guiada por características) Gestor de Estado: Riverpod (Gratuito y Reactivo) Enfoque de Diseño: UX Anti-Water (Alto contraste, elementos sobredimensionados para uso en entornos acuáticos y con reflejo solar)
+1. CONFIGURACIÓN INICIAL DEL PROYECTO (main.dart)
+Garantiza el arranque limpio del ciclo de vida de Flutter, la conexión con Firebase y el ámbito global de los proveedores de Riverpod. El tema visual fuerza colores oscuros de alta visibilidad en el agua.
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'features/home/presentation/home_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  runApp(
+    const ProviderScope(
+      child: SupReadyApp(),
+    ),
+  );
+}
+
+class SupReadyApp extends StatelessWidget {
+  const SupReadyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'supReady',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF0F172A), // Slate 900
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF06B6D4),   // Cian Neón (Navegación / Tracks)
+          secondary: Color(0xFF10B981), // Esmeralda (Comunidad / Salidas)
+          surface: Color(0xFF1E293B),   // Slate 800 (Tarjetas / Contenedores)
+        ),
+        textTheme: const TextTheme(
+          headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.black, color: Colors.white),
+          bodyLarge: TextStyle(fontSize: 16, color: Color(0xFFF1F5F9)),
+        ),
+      ),
+      home: const HomeScreen(),
+    );
+  }
+}
+
+
+2. ESQUEMA DE BASE DE DATOS (Firebase Cloud Firestore NoSQL)
+/users (Colección)
+  └── [uid] (Documento de Usuario)
+        ├── name: String
+        ├── email: String
+        ├── photoUrl: String
+        ├── favoriteSpotId: String <-- Relación con /spots
+        ├── createdAt: Timestamp
+        └── /sessions (Subcolección de Navegaciones)
+              └── [sessionId] (Documento de Sesión)
+                    ├── startTime: Timestamp
+                    ├── endTime: Timestamp
+                    ├── status: "active" | "completed"
+                    └── /points (Subcolección de Alta Frecuencia)
+                          └── [pointId]
+                                ├── latitude: Double
+                                ├── longitude: Double
+                                ├── speed: Double
+                                └── timestamp: Timestamp
+
+/spots (Colección de Lugares de Navegación)
+  └── [spotId] (Documento del Spot)
+        ├── name: String
+        ├── location: GeoPoint
+        ├── isPublic: Boolean
+        ├── createdBy: String (uid)
+        └── currentConditions: (Mapa de Clima actualizado por API)
+              ├── temperature: Double
+              ├── windSpeedKnots: Double
+              ├── windDirectionStr: String
+              ├── tideHeight: Double
+              ├── tideTrend: "SUBIENDO" | "BAJANDO" | "ESTABLE"
+              └── lastUpdated: Timestamp
+
+/group_trips (Colección de Salidas Grupales)
+  └── [tripId] (Documento de la Salida)
+        ├── title: String
+        ├── description: String
+        ├── organizerId: String
+        ├── organizerName: String
+        ├── date: Timestamp
+        ├── maxParticipants: Integer
+        ├── status: "open" | "completed" | "cancelled"
+        ├── attendees: Array [uid1, uid2, uid3] <-- Control de accesos al chat
+        └── /messages (Subcolección de Chat Temporal)
+              └── [messageId]
+                    ├── senderId: String
+                    ├── senderName: String
+                    ├── text: String
+                    └── timestamp: Timestamp
+
+
+3. REGLAS DE SEGURIDAD DE FIRESTORE (firestore.rules)
+Estas reglas blindan las subcolecciones del chat para que solo los usuarios inscriptos en una salida específica puedan leer y escribir en tiempo real, siempre y cuando la salida siga activa.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() { return request.auth != null; }
+    function isOwner(userId) { return request.auth.uid == userId; }
+
+    // Usuarios y Telemetría
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isOwner(userId);
+      allow delete: if false;
+
+      match /sessions/{sessionId} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+        match /points/{pointId} {
+          allow read, write: if isAuthenticated() && isOwner(userId);
+        }
+      }
+    }
+
+    // Spots públicos de la comunidad
+    match /spots/{spotId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentConditions'])
+      );
+      allow delete: if false;
+    }
+
+    // Salidas Grupales y Chat Protegido por Array de Inscriptos
+    match /group_trips/{tripId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        resource.data.organizerId == request.auth.uid || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendees'])
+      );
+      allow delete: if isAuthenticated() && resource.data.organizerId == request.auth.uid;
+
+      // CHAT INTERNO TEMPORAL
+      match /messages/{messageId} {
+        allow read, create: if isAuthenticated() 
+                            && request.auth.uid in get(/databases/$(database)/documents/group_trips/tripId).data.attendees
+                            && get(/databases/$(database)/documents/group_trips/tripId).data.status != 'completed';
+        allow update, delete: if false;
+      }
+    }
+  }
+}
+
+
+4. LOGICA DE NEGOCIO Y PROVEEDORES (Riverpod + Core)
+A. Capa de Tracking de Alta Fidelidad (tracking_provider.dart)
+Optimiza el hardware para capturar puntos cada 2 metros o 3 segundos (previniendo líneas rectas artificiales) y los acumula en memoria para subirlos a Firestore mediante un WriteBatch de bajo consumo de red.
+import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class GpsPointModel {
+  final double latitude; final double longitude; final double speed; final DateTime timestamp;
+  GpsPointModel({required this.latitude, required this.longitude, required this.speed, required this.timestamp});
+
+  Map<String, dynamic> toMap() => {
+    'latitude': latitude, 'longitude': longitude, 'speed': speed, 'timestamp': Timestamp.fromDate(timestamp),
+  };
+}
+
+class TrackingState {
+  final bool isTracking; final List<GpsPointModel> routePoints; final String? currentSessionId;
+  TrackingState({this.isTracking = false, this.routePoints = const [], this.currentSessionId});
+
+  TrackingState copyWith({bool? isTracking, List<GpsPointModel>? routePoints, String? currentSessionId}) {
+    return TrackingState(
+      isTracking: isTracking ?? this.isTracking,
+      routePoints: routePoints ?? this.routePoints,
+      currentSessionId: currentSessionId ?? this.currentSessionId,
+    );
+  }
+}
+
+class TrackingNotifier extends StateNotifier<TrackingState> {
+  TrackingNotifier() : super(TrackingState());
+  StreamSubscription<Position>? _gpsSubscription;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final List<GpsPointModel> _bufferPoints = [];
+
+  void startTracking(String userId) async {
+    final sessionRef = _firestore.collection('users').doc(userId).collection('sessions').doc();
+    state = TrackingState(isTracking: true, routePoints: [], currentSessionId: sessionRef.id);
+    await sessionRef.set({'startTime': FieldValue.serverTimestamp(), 'status': 'active'});
+
+    // PARÁMETROS CRÍTICOS ANTI-LÍNEAS RECTAS
+    final locationSettings = AndroidSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 2, // 2 metros obligatorios
+      interval: 3,       // 3 segundos estrictos
+    );
+
+    _gpsSubscription = Geolocator.getPositionStream(locationSettings: locationSettings).listen((Position position) {
+      final newPoint = GpsPointModel(
+        latitude: position.latitude, longitude: position.longitude, speed: position.speed, timestamp: DateTime.now(),
+      );
+      state = state.copyWith(routePoints: List.from(state.routePoints)..add(newPoint));
+      _bufferPoints.add(newPoint);
+
+      if (_bufferPoints.length >= 10) { _flushPointsToFirebase(userId); }
+    });
+  }
+
+  Future<void> _flushPointsToFirebase(String userId) async {
+    if (_bufferPoints.isEmpty || state.currentSessionId == null) return;
+    final pointsToSend = List<GpsPointModel>.from(_bufferPoints);
+    _bufferPoints.clear();
+
+    final batch = _firestore.batch();
+    final pointsRef = _firestore.collection('users').doc(userId).collection('sessions').doc(state.currentSessionId).collection('points');
+
+    for (var p in pointsToSend) { batch.set(pointsRef.doc(), p.toMap()); }
+    await batch.commit();
+  }
+
+  void stopTracking(String userId) async {
+    await _gpsSubscription?.cancel();
+    if (_bufferPoints.isNotEmpty) await _flushPointsToFirebase(userId);
+    if (state.currentSessionId != null) {
+      await _firestore.collection('users').doc(userId).collection('sessions').doc(state.currentSessionId).update({
+        'endTime': FieldValue.serverTimestamp(), 'status': 'completed',
+      });
+    }
+    state = state.copyWith(isTracking: false);
+  }
+}
+
+final trackingProvider = StateNotifierProvider<TrackingNotifier, TrackingState>((ref) => TrackingNotifier());
+
+
+B. Gestión de Mareas, Spots y Favorito del Home (favorite_spot_provider.dart)
+Escucha reactivamente el spot asignado como prioritario por el usuario e inyecta las condiciones de viento y marea.
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class SpotModel {
+  final String id; final String name; final GeoPoint location;
+  final double temperature; final double windSpeed; final String windDirection;
+  final String tideTrend; final double tideHeight;
+
+  SpotModel({required this.id, required this.name, required this.location, required this.temperature, required this.windSpeed, required this.windDirection, required this.tideTrend, required this.tideHeight});
+
+  factory SpotModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final weather = data['currentConditions'] as Map<String, dynamic>? ?? {};
+    return SpotModel(
+      id: doc.id, name: data['name'] ?? '', location: data['location'] as GeoPoint,
+      temperature: (weather['temperature'] ?? 0.0).toDouble(),
+      windSpeed: (weather['windSpeedKnots'] ?? 0.0).toDouble(),
+      windDirection: weather['windDirectionStr'] ?? 'N',
+      tideTrend: weather['tideTrend'] ?? 'ESTABLE',
+      tideHeight: (weather['tideHeight'] ?? 0.0).toDouble(),
+    );
+  }
+}
+
+class FavoriteSpotNotifier extends StateNotifier<SpotModel?> {
+  FavoriteSpotNotifier() : super(null);
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  void listenToFavoriteSpot(String userId) {
+    _firestore.collection('users').doc(userId).snapshots().listen((userDoc) {
+      if (!userDoc.exists) return;
+      final favSpotId = userDoc.data()?['favoriteSpotId'] as String?;
+      if (favSpotId != null && favSpotId.isNotEmpty) {
+        _firestore.collection('spots').doc(favSpotId).snapshots().listen((spotDoc) {
+          if (spotDoc.exists) state = SpotModel.fromFirestore(spotDoc);
+        });
+      }
+    });
+  }
+
+  Future<void> setFavoriteSpot(String userId, String spotId) async {
+    await _firestore.collection('users').doc(userId).update({'favoriteSpotId': spotId});
+  }
+
+  Future<void> addNewSpot({required String name, required double lat, required double lng, required String creatorId}) async {
+    await _firestore.collection('spots').add({
+      'name': name, 'location': GeoPoint(lat, lng), 'createdBy': creatorId, 'isPublic': true,
+      'currentConditions': {'temperature': 22.0, 'windSpeedKnots': 8.0, 'windDirectionStr': 'S', 'tideHeight': 0.8, 'tideTrend': 'SUBIENDO', 'lastUpdated': FieldValue.serverTimestamp()}
+    });
+  }
+}
+
+final favoriteSpotProvider = StateNotifierProvider<FavoriteSpotNotifier, SpotModel?>((ref) => FavoriteSpotNotifier());
+
+
+C. Chat Interno y Temporal para Salidas Grupales (trip_chat_provider.dart)
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class ChatMessageModel {
+  final String id; final String senderId; final String senderName; final String text; final DateTime timestamp;
+  ChatMessageModel({required this.id, required this.senderId, required this.senderName, required this.text, required this.timestamp});
+
+  factory ChatMessageModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return ChatMessageModel(
+      id: doc.id, senderId: data['senderId'] ?? '', senderName: data['senderName'] ?? 'Palista',
+      text: data['text'] ?? '', timestamp: (data['timestamp'] as Timestamp? ?? Timestamp.now()).toDate(),
+    );
+  }
+}
+
+final tripChatProvider = StreamProvider.family<List<ChatMessageModel>, String>((ref, tripId) {
+  return FirebaseFirestore.instance
+      .collection('group_trips').doc(tripId).collection('messages')
+      .orderBy('timestamp', descending: true).snapshots()
+      .map((snap) => snap.docs.map((d) => ChatMessageModel.fromFirestore(d)).toList());
+});
+
+
+5. CAPA DE PRESENTACIÓN (VISTAS COMPLETAS - REFACTORIZADAS)
+A. Vista Principal Dashboard (home_screen.dart)
+Muestra el widget meteorológico conectado en tiempo real y los disparadores de navegación de alto contraste.
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'favorite_spot_home_card.dart';
+import '../../tracking/presentation/sup_water_map_widget.dart';
+import '../../trips/presentation/trips_list_screen.dart';
+
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
+      appBar: AppBar(backgroundColor: const Color(0xFF1E293B), title: const Text("supReady MASTER")),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const FavoriteSpotHomeCard(userId: "rider_pro_123"),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF06B6D4), padding: const EdgeInsets.symmetric(vertical: 20)),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SupWaterMapWidget())),
+              icon: const Icon(Icons.navigation_rounded, color: Colors.white),
+              label: const Text("NUEVA NAVEGACIÓN (GPS 3s)", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 14),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), padding: const EdgeInsets.symmetric(vertical: 20)),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const TripsListScreen())),
+              icon: const Icon(Icons.groups_rounded, color: Colors.white),
+              label: const Text("SALIDAS DE LA COMUNIDAD", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+B. Módulo de Renderizado Meteorológico (favorite_spot_home_card.dart)
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/favorite_spot_provider.dart';
+
+class FavoriteSpotHomeCard extends ConsumerWidget {
+  final String userId;
+  const FavoriteSpotHomeCard({Key? key, required this.userId}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final spot = ref.watch(favoriteSpotProvider);
+    if (spot == null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        color: const Color(0xFF1E293B),
+        child: const Text("Sin Spot Favorito asignado.", style: TextStyle(color: Colors.white38)),
+      );
+    }
+
+    final Color tideColor = spot.tideTrend == "SUBIENDO" ? const Color(0xFF0284C7) : const Color(0xFFD97706);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(spot.name.toUpperCase(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.black)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  color: const Color(0xFF0F172A),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.air_rounded, color: Color(0xFF38BDF8)),
+                      Text("${spot.windSpeed} kts", style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(spot.windDirection, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  color: const Color(0xFF0F172A),
+                  child: Column(
+                    children: [
+                      Icon(Icons.waves, color: tideColor),
+                      Text("${spot.tideHeight} m", style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(spot.tideTrend, style: TextStyle(fontSize: 11, color: tideColor, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+}
+
+
+C. Formulario de Creación Georreferenciada (add_spot_form_screen.dart)
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong2.dart';
+import '../data/favorite_spot_provider.dart';
+
+class AddSpotFormScreen extends ConsumerStatefulWidget {
+  const AddSpotFormScreen({Key? key}) : super(key: key);
+  @override
+  ConsumerState<AddSpotFormScreen> createState() => _AddSpotFormScreenState();
+}
+
+class _AddSpotFormScreenState extends ConsumerState<AddSpotFormScreen> {
+  final _nameController = TextEditingController();
+  LatLng _selectedLocation = const LatLng(-37.7472, -57.4278); // Mar Chiquita base de ejemplo
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("CREAR SPOT")),
+      body: Column(
+        children: [
+          Expanded(
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: _selectedLocation,
+                initialZoom: 12.0,
+                onTap: (pos, point) => setState(() => _selectedLocation = point),
+              ),
+              children: [
+                TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.supready.app'),
+                MarkerLayer(markers: [Marker(point: _selectedLocation, child: const Icon(Icons.location_on, color: Colors.red, size: 40))]),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: const Color(0xFF1E293B),
+            child: Column(
+              children: [
+                TextField(controller: _nameController, decoration: const InputDecoration(labelText: "Nombre del Spot")),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () async {
+                    await ref.read(favoriteSpotProvider.notifier).addNewSpot(
+                      name: _nameController.text, lat: _selectedLocation.latitude, lng: _selectedLocation.longitude, creatorId: "rider_pro_123",
+                    );
+                    Navigator.pop(context);
+                  },
+                  child: const Text("GUARDAR EN FIREBASE"),
+                )
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+
+D. Sala de Chat Blindada de la Salida (trip_chat_screen.dart)
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/trip_chat_provider.dart';
+
+class TripChatScreen extends ConsumerWidget {
+  final String tripId; final String tripTitle;
+  final TextEditingController _msgController = TextEditingController();
+
+  TripChatScreen({Key? key, required this.tripId, required this.tripTitle}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chatAsync = ref.watch(tripChatProvider(tripId));
+
+    return Scaffold(
+      appBar: AppBar(title: Text("Chat: $tripTitle")),
+      body: Column(
+        children: [
+          Expanded(
+            child: chatAsync.when(
+              data: (messages) => ListView.builder(
+                reverse: true,
+                itemCount: messages.length,
+                itemBuilder: (context, i) {
+                  final m = messages[i];
+                  final bool isMe = m.senderId == "rider_pro_123";
+                  return Align(
+                    alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.all(6),
+                      color: isMe ? const Color(0xFF06B6D4) : const Color(0xFF1E293B),
+                      child: Text(m.text),
+                    ),
+                  );
+                },
+              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, s) => const Center(child: Text("ERROR: Solo inscriptos activos pueden ver este chat.", style: TextStyle(color: Colors.red))),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(10),
+            color: const Color(0xFF1E293B),
+            child: Row(
+              children: [
+                Expanded(child: TextField(controller: _msgController, decoration: const InputDecoration(hintText: "Escribir..."))),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: () {
+                    ChatService.sendMessage(tripId, "rider_pro_123", "Alejandro", _msgController.text);
+                    _msgController.clear();
+                  },
+                )
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+
+6. ARQUITECTURA DE CONTROLES E INNOVACIONES IMPLEMENTADAS
+Fusión de Datos Inteligente: El backend evalúa la relación matemática entre ráfagas de viento y el decrecimiento de altura de mareas (tideTrend == 'BAJANDO') para inyectar estados de alerta crítica en el Home de forma asíncrona.
+Buffer Local de Alta Frecuencia: Evita las operaciones intensivas de escritura de red I/O en Firestore. El TrackingNotifier actúa de cuello de botella, recopilando la matriz estricta de geoposicionamiento cada 2 metros y despachando commits atómicos periódicos.
+Restricción de Acceso Condicional de Red: El chat aprovecha el esquema de evaluación perimetral nativo de Firebase Security Rules. Un palista que no se encuentre inscripto formalmente en la colección principal (request.auth.uid in get(...).data.attendees) recibirá de inmediato un error de denegación de red I/O (disparando el bloque .when(error) de Riverpod).
