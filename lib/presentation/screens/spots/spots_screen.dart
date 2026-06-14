@@ -5,7 +5,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_events.dart';
 import '../../../data/models/models.dart';
 import '../../../data/datasources/remote/clima_service.dart';
+import '../../../data/datasources/remote/firestore_service.dart';
 import '../../../data/datasources/local/sup_database.dart';
+import '../../../data/datasources/remote/auth_service.dart';
 import '../../widgets/spot_card/spot_card.dart';
 
 class SpotsScreen extends StatefulWidget {
@@ -39,6 +41,18 @@ class _SpotsScreenState extends State<SpotsScreen> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => _AgregarSpotConMapa(onGuardar: (spot) async {
         final id = await SupDatabase.instance.insertarSpot(spot);
+        // Sync to Firestore /spots collection
+        final usuario = AuthService.instance.usuarioActual;
+        if (usuario != null) {
+          try {
+            await FirestoreService.instance.crearSpot(
+              nombre: spot.nombre,
+              lat: spot.latitud,
+              lng: spot.longitud,
+              creadorId: usuario.googleId ?? usuario.usuarioId.toString(),
+            );
+          } catch (_) {} // SQLite is source of truth if Firestore fails
+        }
         final c = await ClimaService.instance.obtenerCondiciones(
             spotId: id, latitud: spot.latitud, longitud: spot.longitud);
         final nuevo = SpotModel(spotId: id, nombre: spot.nombre, latitud: spot.latitud,
@@ -54,6 +68,14 @@ class _SpotsScreenState extends State<SpotsScreen> {
       _spots = _spots.map((s) => s.copyWith(esFavorito: s.spotId == spot.spotId)).toList();
     });
     // Notificar al Home para que se actualice
+    // Sync favoriteSpotId to Firestore /users/{uid}
+    final usuario = AuthService.instance.usuarioActual;
+    if (usuario?.googleId != null) {
+      try {
+        await FirestoreService.instance.setFavoriteSpot(
+            usuario!.googleId!, spot.spotId.toString());
+      } catch (_) {}
+    }
     AppEvents.instance.notificarFavoritoChanged(spot.spotId!);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('${spot.nombre} es tu spot favorito ⭐'),

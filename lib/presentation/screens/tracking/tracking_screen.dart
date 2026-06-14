@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/tracking_state.dart';
+import '../../../data/datasources/remote/auth_service.dart';
 import '../../../data/datasources/local/tracking_service.dart';
 import '../../../data/models/models.dart';
 
@@ -68,7 +69,12 @@ class _TrackingScreenState extends State<TrackingScreen>
   Future<void> _iniciarTracking() async {
     setState(() => _cargando = true);
     _state.resetCoordenadas();
-    final ok = await _svc.iniciarTracking(usuarioId: 1, spotId: 1);
+    final auth = AuthService.instance.usuarioActual;
+    final ok = await _svc.iniciarTracking(
+      usuarioId: auth?.usuarioId ?? 1,
+      spotId: 1,
+      firestoreUserId: auth?.googleId ?? auth?.usuarioId?.toString(),
+    );
     if (!ok && mounted) {
       setState(() => _cargando = false);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
