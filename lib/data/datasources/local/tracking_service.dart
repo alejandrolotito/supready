@@ -9,20 +9,45 @@ import '../../models/models.dart';
 import 'sup_database.dart';
 
 // ============================================================
-// SUPReady v2.2 - Tracking robusto pantalla apagada
+// SUPReady v2.4 - Tracking preciso con cálculo GPS real
 //
-// FIXES:
-//  - GPS guardado en SQLite en CADA punto (no en buffer)
-//    → ruta se reconstruye completa aunque la app muera
-//  - distanceFilter: 3m + interval: 5s
-//    → balance entre precisión y batería
-//  - Timer de backup cada 30s: guarda posición aunque
-//    el usuario no se mueva (previene gaps en la ruta)
-//  - WakeLock + ForegroundService: pantalla apagada OK
-//  - Firebase sync: buffer 5 puntos (más frecuente)
+// MEJORAS:
+//  - Velocidad calculada entre puntos consecutivos (no pos.speed)
+//    → más preciso que el doppler del GPS Android
+//  - Suavizado exponencial (EMA) para evitar picos falsos
+//  - Segmentación de tramos por velocidad
+//    (lento <5 km/h / medio 5-12 / rápido >12)
+//  - Filtro de puntos duplicados (jitter GPS < 1m)
+//  - Filtro de velocidades imposibles (> 30 km/h para SUP)
+//  - Haversine para distancia exacta en metros
 // ============================================================
 
 enum EstadoTracking { inactivo, activo, finalizado }
+
+/// Tramo de velocidad para colorear la ruta
+enum TramoVelocidad { lento, medio, rapido }
+
+class PuntoGPS {
+  final double latitud, longitud, velocidadKmh;
+  final DateTime timestamp;
+  final TramoVelocidad tramo;
+  final int secuencia;
+
+  const PuntoGPS({
+    required this.latitud,
+    required this.longitud,
+    required this.velocidadKmh,
+    required this.timestamp,
+    required this.tramo,
+    required this.secuencia,
+  });
+
+  TramoVelocidad get tramoVelocidad {
+    if (velocidadKmh < 5) return TramoVelocidad.lento;
+    if (velocidadKmh < 12) return TramoVelocidad.medio;
+    return TramoVelocidad.rapido;
+  }
+}
 
 class TrackingService with WidgetsBindingObserver {
   static final TrackingService instance = TrackingService._();
@@ -33,11 +58,20 @@ class TrackingService with WidgetsBindingObserver {
   int _usuarioId = 0, _spotId = 0;
   int _secuencia = 0;
   double _distanciaKm = 0.0, _velMax = 0.0;
+  double _velSuavizada = 0.0;           // EMA de velocidad
   DateTime? _inicio;
   Position? _ultimaPos;
+  DateTime? _ultimaTs;                   // timestamp del último punto válido
   DateTime? _ultimaVariacion;
   DateTime? _backgroundAt;
   bool _enBackground = false;
+
+  // Ventana de últimos N puntos para suavizado
+  final List<double> _ventanaVel = [];
+  static const int _ventanaSize = 5;
+
+  // Buffer de tramos para la UI
+  final List<PuntoGPS> _puntosGPS = [];
 
   // Firebase
   String? _firestoreSessionId;
@@ -50,10 +84,12 @@ class TrackingService with WidgetsBindingObserver {
   final _metricasCtrl = StreamController<MetricasTracking>.broadcast();
   final _sosCtrl      = StreamController<void>.broadcast();
 
-  Stream<EstadoTracking>       get estadoStream    => _estadoCtrl.stream;
+  Stream<EstadoTracking>  get estadoStream    => _estadoCtrl.stream;
   Stream<CoordenadasRutaModel> get coordenadaStream => _coordCtrl.stream;
-  Stream<MetricasTracking>     get metricasStream   => _metricasCtrl.stream;
-  Stream<void>                 get sosStream        => _sosCtrl.stream;
+  Stream<MetricasTracking> get metricasStream  => _metricasCtrl.stream;
+  Stream<void>             get sosStream       => _sosCtrl.stream;
+
+  List<PuntoGPS> get puntosGPS => List.unmodifiable(_puntosGPS);
 
   StreamSubscription<Position>? _gpsSub;
   Timer? _sosTimer, _notifTimer, _backupTimer;
@@ -69,7 +105,6 @@ class TrackingService with WidgetsBindingObserver {
       _enBackground = true;
       _backgroundAt = DateTime.now();
       _sosTimer?.cancel();
-      // GPS sigue → WakeLock mantiene CPU activa con pantalla apagada
     } else if (state == AppLifecycleState.resumed && _enBackground) {
       _enBackground = false;
       if (_backgroundAt != null && _ultimaVariacion != null) {
@@ -89,10 +124,7 @@ class TrackingService with WidgetsBindingObserver {
   }) async {
     if (!await _checkPermisos()) return false;
 
-    // 1. WakeLock: mantiene CPU activa con pantalla apagada
     await WakelockPlus.enable();
-
-    // 2. Foreground Service: Android no puede matar el proceso
     await _iniciarForegroundService();
 
     _usuarioId = usuarioId;
@@ -103,16 +135,19 @@ class TrackingService with WidgetsBindingObserver {
     _secuencia = 0;
     _distanciaKm = 0.0;
     _velMax = 0.0;
+    _velSuavizada = 0.0;
     _ultimaVariacion = DateTime.now();
     _enBackground = false;
     _bufferFirebase.clear();
+    _puntosGPS.clear();
+    _ventanaVel.clear();
+    _ultimaPos = null;
+    _ultimaTs = null;
 
-    // SQLite: crear la sesión
     final ruta = RutaTrazadaModel(
         usuarioId: usuarioId, spotId: spotId, iniciadaEn: _inicio!);
     _rutaId = await SupDatabase.instance.insertarRuta(ruta);
 
-    // Firebase: crear sesión en /users/{uid}/sessions/{id}
     if (_firestoreUserId != null) {
       try {
         final sessionRef = _firestore
@@ -124,10 +159,7 @@ class TrackingService with WidgetsBindingObserver {
           'status':    'active',
           'spotId':    spotId,
         });
-      } catch (e) {
-        // Firebase falla → sigue con SQLite local
-        _firestoreSessionId = null;
-      }
+      } catch (_) { _firestoreSessionId = null; }
     }
 
     _estadoCtrl.add(_estado);
@@ -141,7 +173,6 @@ class TrackingService with WidgetsBindingObserver {
   // ─── FINALIZAR ───────────────────────────────────────────
   Future<RutaTrazadaModel?> finalizarTracking() async {
     if (_rutaId == null || !activo) return null;
-
     _gpsSub?.cancel();
     _sosTimer?.cancel();
     _notifTimer?.cancel();
@@ -149,10 +180,8 @@ class TrackingService with WidgetsBindingObserver {
 
     await WakelockPlus.disable();
     await FlutterForegroundTask.stopService();
-
     _estado = EstadoTracking.finalizado;
 
-    // Flush Firebase buffer restante
     if (_bufferFirebase.isNotEmpty) {
       try { await _flushFirebase(); } catch (_) {}
     }
@@ -172,22 +201,21 @@ class TrackingService with WidgetsBindingObserver {
       velocidadMedia:  velMedia,
       velocidadMaxima: _velMax,
     );
-
-    // Actualizar SQLite con stats finales
     await SupDatabase.instance.actualizarRuta(ruta);
 
-    // Cerrar sesión en Firebase
     if (_firestoreUserId != null && _firestoreSessionId != null) {
       try {
         await _firestore
             .collection('users').doc(_firestoreUserId)
             .collection('sessions').doc(_firestoreSessionId)
             .update({
-          'endTime':       FieldValue.serverTimestamp(),
-          'status':        'completed',
-          'distanciaKm':   _distanciaKm,
-          'duracionMin':   dur,
+          'endTime':        FieldValue.serverTimestamp(),
+          'status':         'completed',
+          'distanciaKm':    _distanciaKm,
+          'duracionMin':    dur,
           'velocidadMedia': velMedia,
+          'velocidadMaxima':_velMax,
+          'totalPuntos':    _secuencia,
         });
       } catch (_) {}
     }
@@ -203,14 +231,12 @@ class TrackingService with WidgetsBindingObserver {
     _iniciarSOS();
   }
 
-  // ─── GPS con config óptima para ruta precisa ─────────────
+  // ─── GPS ─────────────────────────────────────────────────
   void _iniciarGPS() {
-    // distanceFilter: 3m → puntos suficientes para ver la ruta bien
-    // intervalDuration: 5s → balance batería/precisión
     final settings = AndroidSettings(
       accuracy:         LocationAccuracy.high,
-      distanceFilter:   3,                          // cada 3 metros
-      intervalDuration: const Duration(seconds: 5), // máx cada 5s
+      distanceFilter:   2,                          // 2m mínimo entre puntos
+      intervalDuration: const Duration(seconds: 3), // cada 3s máximo
     );
     _gpsSub = Geolocator.getPositionStream(locationSettings: settings)
         .listen(_procesarPos);
@@ -219,92 +245,140 @@ class TrackingService with WidgetsBindingObserver {
   void _procesarPos(Position pos) async {
     if (!activo || _rutaId == null) return;
 
-    final velKmh = pos.speed.clamp(0.0, 50.0) * 3.6; // filtrar valores inválidos
-    if (velKmh > _velMax) _velMax = velKmh;
+    final ahora = DateTime.now();
 
-    // Calcular distancia incremental
-    if (_ultimaPos != null) {
-      final dist = _haversine(
+    // ── 1. CALCULAR VELOCIDAD REAL ENTRE PUNTOS ───────────
+    double velKmh = 0.0;
+
+    if (_ultimaPos != null && _ultimaTs != null) {
+      final distM = _haversineMetros(
           _ultimaPos!.latitude, _ultimaPos!.longitude,
           pos.latitude, pos.longitude);
-      if (dist > 0.001) { // filtrar < 1m (jitter GPS)
-        _distanciaKm += dist;
-        _ultimaVariacion = DateTime.now();
-      }
+      final dtSeg = ahora.difference(_ultimaTs!).inMilliseconds / 1000.0;
+
+      // Filtro: ignorar puntos < 1m (jitter GPS) o dt < 1s
+      if (distM < 1.0 || dtSeg < 0.5) return;
+
+      // Velocidad instantánea = distancia / tiempo
+      final velInstKmh = (distM / dtSeg) * 3.6;
+
+      // Filtro: velocidad imposible para SUP (> 35 km/h)
+      if (velInstKmh > 35.0) return;
+
+      // ── 2. SUAVIZADO EMA (ventana de 5 puntos) ──────────
+      _ventanaVel.add(velInstKmh);
+      if (_ventanaVel.length > _ventanaSize) _ventanaVel.removeAt(0);
+
+      // Media móvil simple sobre la ventana
+      velKmh = _ventanaVel.reduce((a, b) => a + b) / _ventanaVel.length;
+
+      // EMA adicional (α=0.4) para suavizar más
+      _velSuavizada = _velSuavizada == 0
+          ? velKmh
+          : 0.4 * velKmh + 0.6 * _velSuavizada;
+      velKmh = _velSuavizada;
+
+      // Actualizar máxima real
+      if (velInstKmh > _velMax) _velMax = velInstKmh;
+
+      // ── 3. ACUMULAR DISTANCIA ────────────────────────────
+      _distanciaKm += distM / 1000.0;
+      _ultimaVariacion = ahora;
     }
 
-    // ✅ GUARDAR EN SQLITE INMEDIATAMENTE (cada punto)
-    // Esto garantiza que la ruta se preserva aunque la app muera
+    _ultimaTs = ahora;
+
+    // ── 4. DETERMINAR TRAMO DE VELOCIDAD ─────────────────
+    final tramo = velKmh < 5.0
+        ? TramoVelocidad.lento
+        : velKmh < 12.0
+            ? TramoVelocidad.medio
+            : TramoVelocidad.rapido;
+
+    // ── 5. GUARDAR EN SQLITE INMEDIATAMENTE ───────────────
     final coord = CoordenadasRutaModel(
       rutaId:       _rutaId!,
       latitud:      pos.latitude,
       longitud:     pos.longitude,
-      secuencia:    _secuencia++,
+      secuencia:    _secuencia,
       velocidadKmh: velKmh,
-      timestamp:    DateTime.now(),
+      timestamp:    ahora,
     );
     await SupDatabase.instance.insertarCoordenada(coord);
+
+    // Agregar a lista de puntos en memoria (para la UI)
+    _puntosGPS.add(PuntoGPS(
+      latitud:      pos.latitude,
+      longitud:     pos.longitude,
+      velocidadKmh: velKmh,
+      timestamp:    ahora,
+      tramo:        tramo,
+      secuencia:    _secuencia,
+    ));
+    _secuencia++;
+
     _coordCtrl.add(coord);
 
-    // ✅ BUFFER FIREBASE (flush cada 5 puntos = ~15-25s)
+    // ── 6. BUFFER FIREBASE (flush cada 5 puntos) ──────────
     if (_firestoreUserId != null && _firestoreSessionId != null) {
       _bufferFirebase.add({
         'latitude':  pos.latitude,
         'longitude': pos.longitude,
-        'speed':     pos.speed,
         'velKmh':    velKmh,
+        'tramo':     tramo.name,
         'sequence':  coord.secuencia,
-        'timestamp': Timestamp.fromDate(coord.timestamp),
+        'timestamp': Timestamp.fromDate(ahora),
       });
       if (_bufferFirebase.length >= 5) {
-        _flushFirebase(); // no await para no bloquear el GPS
+        _flushFirebase(); // no await → no bloquea GPS
       }
     }
 
-    // Actualizar métricas en SQLite periódicamente (cada 10 puntos)
+    // ── 7. ACTUALIZAR STATS en SQLite cada 10 puntos ──────
     if (_secuencia % 10 == 0) {
       final dur = _inicio != null
           ? DateTime.now().difference(_inicio!).inMinutes : 0;
-      final velMedia = dur > 0 ? _distanciaKm / (dur / 60) : 0.0;
-      final rutaActualizada = RutaTrazadaModel(
+      await SupDatabase.instance.actualizarRuta(RutaTrazadaModel(
         rutaId:          _rutaId,
         usuarioId:       _usuarioId,
         spotId:          _spotId,
         iniciadaEn:      _inicio!,
         distanciaKm:     _distanciaKm,
         duracionMinutos: dur,
-        velocidadMedia:  velMedia,
+        velocidadMedia:  dur > 0 ? _distanciaKm / (dur / 60) : 0,
         velocidadMaxima: _velMax,
-      );
-      await SupDatabase.instance.actualizarRuta(rutaActualizada);
+      ));
     }
 
+    // ── 8. EMITIR MÉTRICAS a la UI ────────────────────────
     final duracion = _inicio != null
         ? DateTime.now().difference(_inicio!).inMinutes : 0;
     _metricasCtrl.add(MetricasTracking(
-      distanciaKm:         _distanciaKm,
-      velocidadActualKmh:  velKmh,
-      velocidadMaximaKmh:  _velMax,
-      duracionMinutos:     duracion,
-      latitud:             pos.latitude,
-      longitud:            pos.longitude,
+      distanciaKm:        _distanciaKm,
+      velocidadActualKmh: velKmh,
+      velocidadMaximaKmh: _velMax,
+      duracionMinutos:    duracion,
+      latitud:            pos.latitude,
+      longitud:           pos.longitude,
+      tramo:              tramo,
+      puntosGPS:          List.unmodifiable(_puntosGPS),
     ));
+
     _ultimaPos = pos;
   }
 
-  // Timer de backup: guarda posición cada 30s aunque no haya movimiento
-  // Evita gaps en la ruta si el GPS no registra movimiento
+  // Timer backup: heartbeat cada 30s si hay posición conocida
   void _iniciarBackupTimer() {
     _backupTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
       if (!activo || _rutaId == null || _ultimaPos == null) return;
-      // Guardar un punto de "heartbeat" para mantener continuidad
+      final ahora = DateTime.now();
       final coord = CoordenadasRutaModel(
         rutaId:       _rutaId!,
         latitud:      _ultimaPos!.latitude,
         longitud:     _ultimaPos!.longitude,
         secuencia:    _secuencia++,
         velocidadKmh: 0,
-        timestamp:    DateTime.now(),
+        timestamp:    ahora,
       );
       await SupDatabase.instance.insertarCoordenada(coord);
     });
@@ -314,23 +388,17 @@ class TrackingService with WidgetsBindingObserver {
     if (_bufferFirebase.isEmpty ||
         _firestoreUserId == null ||
         _firestoreSessionId == null) return;
-
     final toSend = List<Map<String, dynamic>>.from(_bufferFirebase);
     _bufferFirebase.clear();
-
     try {
       final batch = _firestore.batch();
       final ref = _firestore
           .collection('users').doc(_firestoreUserId)
           .collection('sessions').doc(_firestoreSessionId)
           .collection('points');
-      for (final p in toSend) {
-        batch.set(ref.doc(), p);
-      }
+      for (final p in toSend) { batch.set(ref.doc(), p); }
       await batch.commit();
-    } catch (_) {
-      // Si falla Firebase, los puntos ya están en SQLite → OK
-    }
+    } catch (_) {}
   }
 
   Future<void> _iniciarForegroundService() async {
@@ -367,11 +435,12 @@ class TrackingService with WidgetsBindingObserver {
           ? DateTime.now().difference(_inicio!).inMinutes : 0;
       final h = dur ~/ 60; final m = dur % 60;
       final durStr = h > 0 ? '${h}h ${m}m' : '${m}m';
-      final velStr = _ultimaPos != null
-          ? '${(_ultimaPos!.speed * 3.6).toStringAsFixed(1)} km/h' : '--';
       FlutterForegroundTask.updateService(
-        notificationTitle: '🏄 Remando — ${_distanciaKm.toStringAsFixed(2)} km',
-        notificationText:  '$durStr · $velStr · ${_secuencia} pts GPS guardados',
+        notificationTitle: '🏄 ${_distanciaKm.toStringAsFixed(2)} km · $durStr',
+        notificationText:
+            '${_velSuavizada.toStringAsFixed(1)} km/h · '
+            'Máx ${_velMax.toStringAsFixed(1)} · '
+            '${_secuencia} pts GPS',
       );
     });
   }
@@ -387,8 +456,9 @@ class TrackingService with WidgetsBindingObserver {
     });
   }
 
-  double _haversine(double lat1, double lon1, double lat2, double lon2) {
-    const R = 6371.0;
+  // ─── Haversine en metros ──────────────────────────────────
+  double _haversineMetros(double lat1, double lon1, double lat2, double lon2) {
+    const R = 6371000.0; // Radio en metros
     final dLat = _rad(lat2 - lat1);
     final dLon = _rad(lon2 - lon1);
     final a = sin(dLat/2)*sin(dLat/2) +
@@ -420,10 +490,13 @@ class _TrackingTaskHandler extends TaskHandler {
   @override Future<void> onDestroy(DateTime t) async {}
 }
 
+// ─── DTO de métricas ─────────────────────────────────────────
 class MetricasTracking {
   final double distanciaKm, velocidadActualKmh, velocidadMaximaKmh;
   final int duracionMinutos;
   final double latitud, longitud;
+  final TramoVelocidad tramo;
+  final List<PuntoGPS> puntosGPS;
 
   const MetricasTracking({
     required this.distanciaKm,
@@ -432,6 +505,8 @@ class MetricasTracking {
     required this.duracionMinutos,
     required this.latitud,
     required this.longitud,
+    required this.tramo,
+    required this.puntosGPS,
   });
 
   String get distanciaFormateada => '${distanciaKm.toStringAsFixed(2)} km';
