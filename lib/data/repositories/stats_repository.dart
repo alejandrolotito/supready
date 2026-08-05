@@ -1,5 +1,4 @@
 import '../datasources/local/sup_database.dart';
-import '../models/models.dart';
 
 // ============================================================
 // SUPReady - Estadísticas calculadas desde SQLite
