@@ -66,6 +66,7 @@ class _PrevisionScreenState extends State<PrevisionScreen> {
                 child: ListView(children: [
                   if (_solar != null) _buildSolar(),
                   _buildAlertasTormenta(),
+                  _buildAlertaOffshore(),
                   _buildTablaHoraria(),
                   const SizedBox(height: 24),
                 ]),
@@ -156,6 +157,49 @@ class _PrevisionScreenState extends State<PrevisionScreen> {
     final fmt = (DateTime dt) => '${dt.hour.toString().padLeft(2,'0')}h';
     if (horas.length == 1) return fmt(horas.first.hora);
     return '${fmt(horas.first.hora)} – ${fmt(horas.last.hora)}';
+  }
+
+
+  Widget _buildAlertaOffshore() {
+    // Viento de tierra (S, SO, O) con > 12 kts → alerta crítica
+    final offshoreHoras = _horas.where((h) {
+      final dir = h.dirTexto;
+      return h.vientoKts > 12 &&
+          (dir == 'S' || dir == 'SO' || dir == 'O' || dir == 'NO');
+    }).toList();
+    if (offshoreHoras.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF7C1D1D),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: SupColors.semaforoRojo, width: 1.5),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Row(children: [
+          Icon(Icons.warning_rounded, color: Colors.white, size: 20),
+          SizedBox(width: 8),
+          Text('⚠️ VIENTO DE TIERRA — RIESGO CRÍTICO',
+              style: TextStyle(color: Colors.white, fontFamily: 'SpaceGrotesk',
+                  fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.5)),
+        ]),
+        const SizedBox(height: 8),
+        const Text(
+          'Viento offshore detectado. Esta condición puede alejarte '
+          'de la costa sin posibilidad de regreso. '
+          'NO se recomienda salir al agua.',
+          style: TextStyle(color: Colors.white70, fontFamily: 'SpaceGrotesk',
+              fontSize: 12, height: 1.5)),
+        const SizedBox(height: 6),
+        Text(
+          'Rango: ${_rangoHoras(offshoreHoras)} · '
+          'Máx ${offshoreHoras.map((h) => h.vientoKts).reduce((a,b) => a>b?a:b).toStringAsFixed(0)} kts',
+          style: const TextStyle(color: Colors.white,
+              fontFamily: 'JetBrainsMono', fontWeight: FontWeight.w700, fontSize: 13)),
+      ]),
+    );
   }
 
   Widget _buildTablaHoraria() {

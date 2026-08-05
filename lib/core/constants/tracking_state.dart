@@ -3,16 +3,13 @@ import '../../data/datasources/local/tracking_service.dart';
 import '../../data/models/models.dart';
 
 // ============================================================
-// SUPReady - Estado global de tracking
-// Sobrevive cambios de tab y navegación interna.
-// Todos los widgets que muestren info de la remada activa
-// escuchan este notifier en lugar del stream directo.
+// SUPReady - Estado global de tracking (Singleton)
+// Sobrevive cambios de tab, comparte métricas con toda la UI
 // ============================================================
 
 class TrackingState extends ChangeNotifier {
   static final TrackingState instance = TrackingState._();
   TrackingState._() {
-    // Escuchar métricas del servicio y re-notificar a la UI
     TrackingService.instance.metricasStream.listen((m) {
       _metricas = m;
       notifyListeners();
@@ -36,5 +33,8 @@ class TrackingState extends ChangeNotifier {
   List<CoordenadasRutaModel> get coordenadas => List.unmodifiable(_coordenadas);
   bool get activo => _estado == EstadoTracking.activo;
 
-  void resetCoordenadas() => _coordenadas.clear();
+  void resetCoordenadas() {
+    _coordenadas.clear();
+    notifyListeners();
+  }
 }
